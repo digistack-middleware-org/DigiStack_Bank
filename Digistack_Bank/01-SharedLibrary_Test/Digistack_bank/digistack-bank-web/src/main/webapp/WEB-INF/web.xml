@@ -8,7 +8,7 @@
     <display-name>DigiStack Bank</display-name>
 
     <welcome-file-list>
-        <welcome-file>Home.jsp</welcome-file>
+        <welcome-file>home</welcome-file>
     </welcome-file-list>
 
 </web-app>

@@ -6,7 +6,7 @@
 </head>
 <body>
     <h1>DigiStack Bank</h1>
-    <p>Welcome. This is the Version 1 Home page skeleton.</p>
-    <p>Live database read will appear here in Sprint 4.</p>
+    <p><strong>Live message from database:</strong></p>
+    <p>${welcomeMessage}</p>
 </body>
 </html>
