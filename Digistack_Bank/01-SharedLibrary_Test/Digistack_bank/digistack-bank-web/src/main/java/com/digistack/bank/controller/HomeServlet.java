@@ -24,7 +24,7 @@ public class HomeServlet extends HttpServlet {
     // Replaced by a JNDI-managed DataSource in Version 7.
     private static final String DB_URL = "jdbc:postgresql://192.168.10.30:5432/digistack_bank";
     private static final String DB_USER = "digistack_app";
-    private static final String DB_PASSWORD = "YourStrongPasswordHere"; // TODO: replace with your actual password
+    private static final String DB_PASSWORD = "Wasadmin@951951"; 
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
