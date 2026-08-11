@@ -106,19 +106,3 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO digistack_app;
 ```
 \q
 ```
-# Deploy Schema to database
-
-### Deploy in Localhost {DB server}
-```
-psql -h localhost -U digistack_app -d digistack_bank -f V1__create_app_config.sql
-```
-#### Verification
-```
-psql -h localhost -U digistack_app -d digistack_bank -c "SELECT * FROM app_config;"
-```
-Expected output:
-```
-id | config_key      | config_value                          | created_at
-----+-----------------+---------------------------------------+-------------------
-  1 | welcome_message | DigiStack Bank is live - Version 1     | <timestamp>
-```
