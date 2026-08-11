@@ -31,7 +31,24 @@ mvn clean package
 Generated artifact ==> digistack-bank-ear/target/digistack-bank-v1.ear
 
 # Deploy the Application
-<img width="680" height="280" alt="image" src="https://github.com/user-attachments/assets/74ba242d-b2b2-47d6-9216-6b706773c299" />
+1. Log into Admin Console: https://<vm-ip>:9043/ibm/console
+2. Go to: Applications → New Application → New Enterprise Application
+3. Choose Remote file system (since the EAR is already on the VM, not your browser's machine) → Browse → navigate to /opt/staging/ears/digistack-bank-v1.ear → Next
+4. Choose Fast Path (the simplified wizard, appropriate for a first deploy) → Next
+5. On the Select Installation Options screen:
+		Leave defaults, confirm Application name shows digistack-bank-v1 (or similar, auto-derived from the EAR)
+		Click Next
+6. On Map Modules to Servers:
+		Select the digistack-bank-web module checkbox
+		Confirm the target server shown is server1 on node devdsbinnode01
+		Click Next
+7. On Map Virtual Host for Web Modules:
+		Select the digistack-bank-web module checkbox
+		Set Virtual host to default_host (WAS's built-in virtual host — sufficient for this lab; a dedicated virtual host isn't required until multi-app routing needs it)
+		Click Next
+8. Continue through remaining screens (context root should already show /digistack-bank from our EAR's pom.xml) → click Next through to Summary
+9. Click Finish
+10. Wait for installation to complete (progress bar/log output appears) — then click the Save link to commit to the master configuration.
 
 
 # Verification
