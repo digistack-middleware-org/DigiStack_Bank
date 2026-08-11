@@ -93,6 +93,19 @@ GRANT ALL PRIVILEGES ON DATABASE digistack_bank TO digistack_app;
 ```
 \q
 ```
+### Grant Schema-Level Privileges to user "digistack_app"
+```
+sudo -i -u postgres
+psql -d digistack_bank
+```
+```
+GRANT ALL ON SCHEMA public TO digistack_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO digistack_app;
+```
+### Quit Db
+```
+\q
+```
 # Deploy Schema to database
 
 ### Deploy in Localhost {DB server}
