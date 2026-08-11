@@ -32,7 +32,7 @@ id | config_key      | config_value                          | created_at
 
 Download the PostgreSQL JDBC driver.
 ```
-wget https://jdbc.postgresql.org/download/postgresql-42.5.4.jar
+wget https://jdbc.postgresql.org/download/postgresql-42.7.3.jar
 
 ```
 Create Directory for postgresql driver 
@@ -44,8 +44,8 @@ sudo mkdir -p /apps/IBM/SharedLibs/postgresql
 Copy to
 
 ```
-sudo mv postgresql-42.5.4.jar /apps/IBM/SharedLibs/postgresql/
-sudo chown wasadmin:wasadmin /apps/IBM/SharedLibs/postgresql/postgresql-42.5.4.jar
+sudo mv postgresql-42.7.3.jar /apps/IBM/SharedLibs/postgresql/
+sudo chown wasadmin:wasgrp /apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar
 ```
 # Establish Connection Between DB to Server-1 
 HERE we Establish Connection between Database to server-1 only, not at Profile level or Cell level or Cluater Level, its at server1 level
