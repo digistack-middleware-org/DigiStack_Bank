@@ -28,11 +28,11 @@
             color: var(--db-gold);
         }
         .db-balance-card {
-            border: none;
-            border-radius: 16px;
             background: linear-gradient(135deg, var(--db-navy) 0%, var(--db-blue) 100%);
             color: #fff;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             opacity: 0;
             animation: fadeInUp 0.6s ease-out forwards;
         }
@@ -41,26 +41,28 @@
             font-weight: 700;
             color: var(--db-gold);
         }
-        .db-form-card {
+        .db-action-card {
             border: none;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             opacity: 0;
             animation: fadeInUp 0.6s ease-out 0.15s forwards;
         }
-        .btn-deposit {
-            background-color: #1e7e34;
+        .btn-db {
+            background-color: var(--db-navy);
             border: none;
+            transition: background-color 0.2s ease;
         }
-        .btn-deposit:hover {
-            background-color: #17652a;
+        .btn-db:hover {
+            background-color: var(--db-blue);
         }
         .btn-withdraw {
-            background-color: #a12a2a;
+            background-color: #7a1f2b;
             border: none;
+            transition: background-color 0.2s ease;
         }
         .btn-withdraw:hover {
-            background-color: #841f1f;
+            background-color: #93242f;
         }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(16px); }
@@ -81,32 +83,27 @@
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
 
-                <div class="card db-balance-card mb-4">
-                    <div class="card-body text-center py-4">
-                        <p class="mb-1 text-white-50 small">Current Balance</p>
-                        <div class="db-balance-amount">
-                            &#8377; ${balance}
-                        </div>
-                    </div>
-                </div>
-
-                <% if (request.getAttribute("resultMessage") != null) { %>
-                    <div class="alert alert-info py-2 small">${resultMessage}</div>
+                <% if (request.getAttribute("message") != null) { %>
+                    <div class="alert alert-info small">${message}</div>
                 <% } %>
 
-                <div class="card db-form-card p-4">
-                    <div class="card-body">
-                        <form action="${pageContext.request.contextPath}/account" method="post">
-                            <div class="mb-3">
-                                <label for="amount" class="form-label small text-muted">Amount</label>
-                                <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" required>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" name="action" value="deposit" class="btn btn-deposit text-white flex-fill">Deposit</button>
-                                <button type="submit" name="action" value="withdraw" class="btn btn-withdraw text-white flex-fill">Withdraw</button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="card db-balance-card mb-4 text-center p-4">
+                    <p class="text-uppercase small mb-1" style="letter-spacing:1px; opacity:0.8;">Available Balance</p>
+                    <p class="db-balance-amount mb-0">₹${balance}</p>
+                </div>
+
+                <div class="card db-action-card p-4">
+                    <h5 class="mb-3 text-muted">Deposit / Withdraw</h5>
+                    <form action="${pageContext.request.contextPath}/account" method="post">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label small text-muted">Amount</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" required>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="deposit" class="btn btn-db text-white w-50">Deposit</button>
+                            <button type="submit" name="action" value="withdraw" class="btn btn-withdraw text-white w-50">Withdraw</button>
+                        </div>
+                    </form>
                 </div>
 
             </div>

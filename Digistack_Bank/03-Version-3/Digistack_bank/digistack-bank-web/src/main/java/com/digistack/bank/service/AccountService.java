@@ -1,6 +1,7 @@
 package com.digistack.bank.service;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.logging.Logger;
 
 import com.digistack.bank.dao.AccountDao;
@@ -8,72 +9,58 @@ import com.digistack.bank.dao.AccountDao;
 public class AccountService {
 
     private static final Logger logger = Logger.getLogger(AccountService.class.getName());
-
     private final AccountDao accountDao = new AccountDao();
 
     /**
-     * Returns the current balance for the given user, or null if no account exists.
+     * Returns the current balance for an account.
      */
-    public BigDecimal getBalance(int userId) {
-        return accountDao.getBalance(userId);
+    public BigDecimal getBalance(int accountId) throws SQLException {
+        return accountDao.getBalance(accountId);
     }
 
     /**
-     * Deposits the given amount into the user's account.
-     * Returns true if successful, false if the deposit was invalid or failed.
+     * Deposits a positive amount into the account.
+     * Returns the new balance.
      */
-    public boolean deposit(int userId, BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            logger.warning("AccountService.deposit: rejected non-positive amount for userId=" + userId);
-            return false;
+    public BigDecimal deposit(int accountId, BigDecimal amount) throws SQLException, IllegalArgumentException {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Deposit amount must be greater than zero.");
         }
 
-        BigDecimal currentBalance = accountDao.getBalance(userId);
+        BigDecimal currentBalance = accountDao.getBalance(accountId);
         if (currentBalance == null) {
-            logger.warning("AccountService.deposit: no account found for userId=" + userId);
-            return false;
+            throw new IllegalArgumentException("Account not found.");
         }
 
         BigDecimal newBalance = currentBalance.add(amount);
-        boolean success = accountDao.updateBalance(userId, newBalance);
+        accountDao.updateBalance(accountId, newBalance);
 
-        if (success) {
-            logger.info("AccountService.deposit: userId=" + userId + " deposited " + amount + ", new balance=" + newBalance);
-        }
-
-        return success;
+        logger.info("AccountService: deposited " + amount + " to account " + accountId + ". New balance: " + newBalance);
+        return newBalance;
     }
 
     /**
-     * Withdraws the given amount from the user's account.
-     * Returns true if successful, false if the withdrawal was invalid, would
-     * overdraw the account, or failed.
+     * Withdraws a positive amount from the account, if sufficient balance exists.
+     * Returns the new balance.
      */
-    public boolean withdraw(int userId, BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            logger.warning("AccountService.withdraw: rejected non-positive amount for userId=" + userId);
-            return false;
+    public BigDecimal withdraw(int accountId, BigDecimal amount) throws SQLException, IllegalArgumentException {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Withdrawal amount must be greater than zero.");
         }
 
-        BigDecimal currentBalance = accountDao.getBalance(userId);
+        BigDecimal currentBalance = accountDao.getBalance(accountId);
         if (currentBalance == null) {
-            logger.warning("AccountService.withdraw: no account found for userId=" + userId);
-            return false;
+            throw new IllegalArgumentException("Account not found.");
         }
 
         if (currentBalance.compareTo(amount) < 0) {
-            logger.warning("AccountService.withdraw: rejected overdraft attempt for userId=" + userId
-                    + " (balance=" + currentBalance + ", requested=" + amount + ")");
-            return false;
+            throw new IllegalArgumentException("Insufficient balance. Current balance: " + currentBalance);
         }
 
         BigDecimal newBalance = currentBalance.subtract(amount);
-        boolean success = accountDao.updateBalance(userId, newBalance);
+        accountDao.updateBalance(accountId, newBalance);
 
-        if (success) {
-            logger.info("AccountService.withdraw: userId=" + userId + " withdrew " + amount + ", new balance=" + newBalance);
-        }
-
-        return success;
+        logger.info("AccountService: withdrew " + amount + " from account " + accountId + ". New balance: " + newBalance);
+        return newBalance;
     }
 }

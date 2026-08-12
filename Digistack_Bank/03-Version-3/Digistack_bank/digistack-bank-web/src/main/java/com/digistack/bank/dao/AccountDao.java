@@ -17,49 +17,49 @@ public class AccountDao {
     private static final String DB_PASSWORD = "Wasadmin@951951";
 
     /**
-     * Returns the current balance for the account belonging to the given user ID.
-     * Returns null if no account is found.
+     * Fetches the current balance for a given account ID.
+     * Returns null if the account doesn't exist.
      */
-    public BigDecimal getBalance(int userId) {
-        String sql = "SELECT balance FROM accounts WHERE user_id = ?";
+    public BigDecimal getBalance(int accountId) throws SQLException {
+        String sql = "SELECT balance FROM accounts WHERE id = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, userId);
+            stmt.setInt(1, accountId);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getBigDecimal("balance");
                 }
+                return null;
             }
-
-        } catch (SQLException e) {
-            logger.severe("AccountDao.getBalance: database error: " + e.getMessage());
         }
-
-        return null;
     }
 
     /**
-     * Updates the balance for the account belonging to the given user ID.
-     * Returns true if exactly one row was updated.
+     * Updates the balance for a given account ID to a new absolute value.
      */
-    public boolean updateBalance(int userId, BigDecimal newBalance) {
-        String sql = "UPDATE accounts SET balance = ? WHERE user_id = ?";
+    public void updateBalance(int accountId, BigDecimal newBalance) throws SQLException {
+        String sql = "UPDATE accounts SET balance = ? WHERE id = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setBigDecimal(1, newBalance);
-            stmt.setInt(2, userId);
+            stmt.setInt(2, accountId);
 
             int rowsAffected = stmt.executeUpdate();
-            return rowsAffected == 1;
-
-        } catch (SQLException e) {
-            logger.severe("AccountDao.updateBalance: database error: " + e.getMessage());
-            return false;
+            logger.info("AccountDao: updateBalance affected " + rowsAffected + " row(s) for account " + accountId);
         }
+    }
+
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("PostgreSQL JDBC driver not found", e);
+        }
+        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 }

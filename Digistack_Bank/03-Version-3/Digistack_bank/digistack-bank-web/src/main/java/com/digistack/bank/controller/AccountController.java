@@ -2,6 +2,7 @@ package com.digistack.bank.controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -18,64 +19,80 @@ public class AccountController extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AccountController.class.getName());
-
     private final AccountService accountService = new AccountService();
+
+    // Hardcoded for v3 — real customer/account linking comes in later versions.
+    private static final int ACCOUNT_ID = 1;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
+        if (!isLoggedIn(request)) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        int userId = (int) session.getAttribute("userId");
-        BigDecimal balance = accountService.getBalance(userId);
-
-        request.setAttribute("balance", balance);
-        request.getRequestDispatcher("/Account.jsp").forward(request, response);
+        showAccountPage(request, response, null);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
+        if (!isLoggedIn(request)) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        int userId = (int) session.getAttribute("userId");
         String action = request.getParameter("action");
         String amountStr = request.getParameter("amount");
-
-        String resultMessage;
+        String message = null;
 
         try {
             BigDecimal amount = new BigDecimal(amountStr);
 
-            boolean success;
             if ("deposit".equals(action)) {
-                success = accountService.deposit(userId, amount);
-                resultMessage = success ? "Deposit successful." : "Deposit failed. Enter a valid positive amount.";
+                accountService.deposit(ACCOUNT_ID, amount);
+                message = "Deposit successful.";
             } else if ("withdraw".equals(action)) {
-                success = accountService.withdraw(userId, amount);
-                resultMessage = success ? "Withdrawal successful." : "Withdrawal failed. Check your balance and amount.";
+                accountService.withdraw(ACCOUNT_ID, amount);
+                message = "Withdrawal successful.";
             } else {
-                resultMessage = "Unknown action.";
+                message = "Unknown action requested.";
             }
 
         } catch (NumberFormatException e) {
-            logger.warning("AccountController: invalid amount entered: " + amountStr);
-            resultMessage = "Invalid amount entered.";
+            message = "Please enter a valid numeric amount.";
+        } catch (IllegalArgumentException e) {
+            message = e.getMessage();
+        } catch (SQLException e) {
+            logger.severe("AccountController: database error during " + action + ": " + e.getMessage());
+            message = "A system error occurred. Please try again.";
         }
 
-        BigDecimal balance = accountService.getBalance(userId);
-        request.setAttribute("balance", balance);
-        request.setAttribute("resultMessage", resultMessage);
+        showAccountPage(request, response, message);
+    }
+
+    private void showAccountPage(HttpServletRequest request, HttpServletResponse response, String message)
+            throws ServletException, IOException {
+        try {
+            BigDecimal balance = accountService.getBalance(ACCOUNT_ID);
+            request.setAttribute("balance", balance);
+        } catch (SQLException e) {
+            logger.severe("AccountController: failed to fetch balance: " + e.getMessage());
+            request.setAttribute("balance", "Unavailable");
+        }
+
+        if (message != null) {
+            request.setAttribute("message", message);
+        }
+
         request.getRequestDispatcher("/Account.jsp").forward(request, response);
+    }
+
+    private boolean isLoggedIn(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        return session != null && session.getAttribute("username") != null;
     }
 }
