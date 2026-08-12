@@ -23,7 +23,7 @@
     </dependencies>
 
     <build>
-        <finalName>digistack-bank-v1</finalName>
+        <finalName>digistack-bank-v4</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

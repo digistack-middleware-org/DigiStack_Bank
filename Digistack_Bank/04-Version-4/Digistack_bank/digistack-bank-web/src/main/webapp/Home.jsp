@@ -148,7 +148,7 @@
 
             <a class="navbar-brand" href="#">
 
-                DigiStack <span>Bank</span>
+                DigiStack <span>Bank</span> <small class="text-white-50" style="font-size: 0.6rem;">v4</small>
 
             </a>
 
