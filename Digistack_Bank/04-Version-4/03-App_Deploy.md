@@ -1,4 +1,4 @@
-# Build and Deploy the Application
+# Rollback the Deployment LAB
 
 ## Install the Build Tool
 1. Install Java
@@ -22,35 +22,80 @@ mvn -version
 ```
 git clone <Repo-URL>
 ```
-## Build the Application
+## Version-3 Application to Build {Version-4 Fail need to redeploy Version-3}
 
-From the project directory.
+01- Goto Version-3 Project directory.
 ```
 mvn clean package
 ```
 Generated artifact ==> digistack-bank-ear/target/digistack-bank-v1.ear
 
+02- Move the V3.ear file to /opt
+```
+sudo cp digistack-bank-ear/target/digistack-bank-v1.ear /opt
+```
+## Version-4 Application to Build 
+01- Goto Version-4 Project directory.
+```
+mvn clean package
+```
+Generated artifact ==> digistack-bank-ear/target/digistack-bank-v4.ear
+
+02- Move the V3.ear file to /opt
+```
+sudo cp digistack-bank-ear/target/digistack-bank-v4.ear /opt
+```
+## Check we have Both Versions in /opt
+```
+la -altr /opt
+```
+
+
 # Deploy the Application
-1. Log into Admin Console: https://<vm-ip>:9043/ibm/console
-2. Go to: Applications → New Application → New Enterprise Application
-3. Choose Remote file system (since the EAR is already on the VM, not your browser's machine) → Browse → navigate to /opt/staging/ears/digistack-bank-v1.ear → Next
-4. Choose Fast Path (the simplified wizard, appropriate for a first deploy) → Next
-5. On the Select Installation Options screen:
-		Leave defaults, confirm Application name shows digistack-bank-v1 (or similar, auto-derived from the EAR)
-		Click Next
-6. On Map Modules to Servers:
-		Select the digistack-bank-web module checkbox
-		Confirm the target server shown is server1 on node devdsbinnode01
-		Click Next
-7. On Map Virtual Host for Web Modules:
-		Select the digistack-bank-web module checkbox
-		Set Virtual host to default_host (WAS's built-in virtual host — sufficient for this lab; a dedicated virtual host isn't required until multi-app routing needs it)
-		Click Next
-8. Continue through remaining screens (context root should already show /digistack-bank from our EAR's pom.xml) → click Next through to Summary
-9. Click Finish
-10. Wait for installation to complete (progress bar/log output appears) — then click the Save link to commit to the master configuration.
+```
+1. Log into Admin Console ==> https://<vm-ip>:9043/ibm/console
+2. Go to ==> Applications → All Applications
+		Find the existing application:
+			digistack-bank
+3. Open the application and click Update.
+4. On the Preparing for the application update screen, choose -> Replace the entire application
+			This tells WebSphere to replace the currently deployed EAR contents with the new EAR while keeping the existing application identity and configuration.
+5. Select the new EAR:
+		Choose Remote file system because the EAR is already on the WebSphere VM → Browse → navigate to: /opt/staging/ears/digistack-bank-v4.ear → Next
+6. On the Select Installation Options / Update Options screen:
+		Leave the existing application configuration unchanged.
+		Confirm the application being updated is still -> digistack-bank-v1
+		Do not create a new application name such as digistack-bank-v4.
+		Click Next.
 
+7. On Map Modules to Servers:
+	Confirm the existing mapping is still:
 
+		Module: digistack-bank-web
+		Target: server1
+		Node: devdsbinnode01
+
+			Do not change the deployment target.
+			This is one of the key things we're verifying with Update: the existing deployment mapping is preserved.
+
+				Click Next.
+
+8. On Map Virtual Hosts for Web Modules:
+	Confirm:
+			Module: digistack-bank-web
+			Virtual host: default_host
+
+9. Do not change the virtual host.
+	The existing virtual-host mapping should remain intact.
+
+		Click Next.
+
+Continue through the remaining screens.
+Confirm the existing context root remains:
+
+		/digistack-bank
+
+```
 # Verification
 1. Open a browser and go to:
 ```
