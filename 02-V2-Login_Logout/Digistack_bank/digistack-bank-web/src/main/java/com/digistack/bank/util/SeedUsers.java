@@ -13,25 +13,20 @@ import java.sql.PreparedStatement;
  *
  * Run ONCE after V2__create_users.sql migration, before deploying v2.
  *
- * How to compile and run (from digistack-bank-parent on Windows):
+ * How to compile and run (from digistack-bank-parent on Linux):
  *
- *   1. Build the project first so PasswordUtil is compiled:
- *      mvn clean package
+ *   1. Build the project so PasswordUtil is compiled:
+ *        mvn clean package
  *
- *   2. Compile SeedUsers with the PostgreSQL JDBC driver on the classpath.
- *      The driver JAR must be downloaded locally for this step.
- *      Download it to C:\Tools\postgresql-42.7.3.jar
- *      (or any path — adjust the command below accordingly).
+ *   2. Compile SeedUsers with the PostgreSQL JDBC driver on the classpath:
+ *        javac -cp "digistack-bank-web/target/classes:/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" \
+ *          digistack-bank-web/src/main/java/com/digistack/bank/util/SeedUsers.java \
+ *          digistack-bank-web/src/main/java/com/digistack/bank/util/PasswordUtil.java \
+ *          -d digistack-bank-web/target/classes
  *
- *   3. Compile:
- *      javac -cp "digistack-bank-web\target\classes;C:\Tools\postgresql-42.7.3.jar" ^
- *        digistack-bank-web\src\main\java\com\digistack\bank\util\SeedUsers.java ^
- *        digistack-bank-web\src\main\java\com\digistack\bank\util\PasswordUtil.java ^
- *        -d digistack-bank-web\target\classes
- *
- *   4. Run:
- *      java -cp "digistack-bank-web\target\classes;C:\Tools\postgresql-42.7.3.jar" ^
- *        com.digistack.bank.util.SeedUsers
+ *   3. Run:
+ *        java -cp "digistack-bank-web/target/classes:/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" \
+ *          com.digistack.bank.util.SeedUsers
  *
  * Expected output:
  *   Connected to digistack_bank on dsb-db.
@@ -39,6 +34,7 @@ import java.sql.PreparedStatement;
  *   Updated admin1 with correct password hash.
  *   Seed complete. Both users ready for login.
  */
+
 public class SeedUsers {
 
     // Direct JDBC — this is a local admin utility, not a WAS-deployed class.
