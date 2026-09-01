@@ -98,15 +98,22 @@ Key facts about a hash:
  1. Connects directly to the database (via JDBC)
  2. Computes the real SHA-256 hashes for Customer@123 and Admin@123 using PasswordUtil
  3. Updates the two placeholder rows with the real hashes
-    
+
+## Build the Package
+```
+mvn clean package
+```
 #### Compile SeedUsers
 ```
-javac -cp "digistack-bank-web\target\classes;/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" digistack-bank-web\src\main\java\com\digistack\bank\util\SeedUsers.java digistack-bank-web\src\main\java\com\digistack\bank\util\PasswordUtil.java -d digistack-bank-web\target\classes
-
+javac -cp "digistack-bank-web/target/classes:/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" \
+  digistack-bank-web/src/main/java/com/digistack/bank/util/SeedUsers.java \
+  digistack-bank-web/src/main/java/com/digistack/bank/util/PasswordUtil.java \
+  -d digistack-bank-web/target/classes
 ```
 #### RUN  SeedUsers
 ```
-java -cp "digistack-bank-web\target\classes;/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" com.digistack.bank.util.SeedUsers
+java -cp "digistack-bank-web/target/classes:/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" \
+  com.digistack.bank.util.SeedUsers
 ```
 Expected output:
 ```
