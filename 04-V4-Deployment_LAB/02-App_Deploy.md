@@ -222,23 +222,7 @@ grep "v4" \
 > directory — the Update replaced the files correctly.
 
 ---
-
-# Step 8 — Commit Sprint 2
-
-```bash
-cd C:\Projects\digistack-bank-parent
-git add .
-git commit -m "feat: add v4_update.py, demonstrate Update Application path — v4 Sprint 2"
-```
-
-**✅ Expected result:**
-
-```
-[feature/v4-lifecycle XXXXXXX] feat: add v4_update.py, demonstrate Update Application path — v4 Sprint 2
-```
-
----
-# P01 v4 — Sprint 3: Application Lifecycle (Stop/Start/Restart) + Register digistack-bank-v4
+#  Application Lifecycle (Stop/Start/Restart) + Register digistack-bank-v4
 
 ## 🎯 What this sprint delivers
 
@@ -383,7 +367,7 @@ cd /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/bin/
 ```
 ADMU4000I: Server server1 stop completed.
 ```
-
+```
 ## Step 3.2 — Attempt to access the Admin Console
 
 ```
