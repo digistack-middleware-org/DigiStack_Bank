@@ -34,10 +34,10 @@ Generated artifact ==> digistack-bank-ear/target/digistack-bank-v2.ear
 
 Compile SeedUsers with both the compiled classes and the JDBC JAR on the classpath.
 ```
-javac -cp "digistack-bank-web\target\classes;C:\Tools\postgresql-42.7.3.jar" ^
-  digistack-bank-web\src\main\java\com\digistack\bank\util\SeedUsers.java ^
-  digistack-bank-web\src\main\java\com\digistack\bank\util\PasswordUtil.java ^
-  -d digistack-bank-web\target\classes
+javac -cp "digistack-bank-web/target/classes:/apps/IBM/SharedLibs/postgresql/postgresql-42.7.3.jar" \
+  digistack-bank-web/src/main/java/com/digistack/bank/util/SeedUsers.java \
+  digistack-bank-web/src/main/java/com/digistack/bank/util/PasswordUtil.java \
+  -d digistack-bank-web/target/classes
 ```
 Expected result — no output means success. If you see error messages, share them.
 
