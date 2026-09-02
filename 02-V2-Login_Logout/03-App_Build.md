@@ -28,7 +28,7 @@ From the project directory.
 ```
 mvn clean package
 ```
-Generated artifact ==> digistack-bank-ear/target/digistack-bank-v1.ear
+Generated artifact ==> digistack-bank-ear/target/digistack-bank-v2.ear
 
 # Confirm the EAR contains the correct WAR
 
@@ -43,7 +43,7 @@ Expected result — no output means success. If you see error messages, share th
 
 Run this command to list the EAR contents:
 ```
-jar tf digistack-bank-ear\target\digistack-bank-v1.ear
+jar tf digistack-bank-ear\target\digistack-bank-v2.ear
 ```
 jar tf: The jar tool is bundled with your Java installation. tf means "table of contents", it lists every file inside the archive without extracting it. EARs and WARs are ZIP files with different extensions.
 
