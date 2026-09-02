@@ -1,4 +1,17 @@
 # Full End-to-End Flow Test
+Check the URL Working or Not
+```
+curl -s -o /dev/null -w "%{http_code}" \
+  http://192.168.10.10:9080/digistack-bank/Home
+```
+Expected result ==> 200
+
+```
+curl -s -o /dev/null -w "%{http_code}" \
+  http://192.168.10.10:9080/digistack-bank/Login
+```
+Expected result ==> 200
+
 ## Flow 1 — Unauthenticated access guard
 Step 5.1 — Open a fresh browser tab and navigate directly to:
 ```
