@@ -62,3 +62,17 @@
 ## ✅ Deployment Complete
 The application `digistack-bank-v2` is now installed and committed to the master configuration.
 Verify it under **Applications → Application Types → WebSphere enterprise applications**.
+
+# Step 4.3 — Confirm the server log shows the new servlets initialised
+
+```
+grep -E "LoginServlet|LogoutServlet|DashboardServlet|HomeServlet" \
+  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log \
+  | tail -10
+```
+Expected result — you should see init messages for all four servlets:
+```
+HomeServlet: PostgreSQL JDBC driver loaded successfully.
+LoginServlet: ...
+DashboardServlet: PostgreSQL JDBC driver loaded successfully.
+```
