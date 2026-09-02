@@ -3,15 +3,13 @@
 
   ## Request Flow
 
-<img src="03-V3-Money_Transfer/images/V3-Layer-Layer-Flow.png" width="800">
+<img src="images/V3-Layer-Layer-Flow.png" width="800">
 
 
    ## Layer-by-Layer Request Flow
 
-```
-![Layer-By-Layer_Flow](images/V3-Layer-Layer-Flow.png)
+<img src="images/V3-Layer-Layer-Flow.png" width="800">
 
-```
 ```
 
         BROWSER
