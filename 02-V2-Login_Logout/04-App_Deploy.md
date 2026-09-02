@@ -29,7 +29,7 @@
 
 ### 5. Select Installation Options
 - Leave defaults.
-- Confirm **Application name** shows `digistack-bank-v1` (or similar, auto-derived from the EAR).
+- Confirm **Application name** shows `digistack-bank-v2` (or similar, auto-derived from the EAR).
 - Click **Next**.
 
 ### 6. Map Modules to Servers
