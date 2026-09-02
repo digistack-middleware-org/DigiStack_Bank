@@ -78,8 +78,8 @@ INSERT INTO users (
     'PLACEHOLDER_REPLACED_IN_SPRINT2',
     'a1b2c3d4e5f6a1b2',
     'CUSTOMER',
-    'Ravi Kumar',
-    'ravi.kumar@digistack.cloud'
+    'Peta Venkatesh',
+    'peta.venkatesh@digistack.cloud'
 );
 
 INSERT INTO users (
