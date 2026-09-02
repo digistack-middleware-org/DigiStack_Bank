@@ -60,5 +60,5 @@
 ---
 
 ## ✅ Deployment Complete
-The application `digistack-bank-v1` is now installed and committed to the master configuration.
+The application `digistack-bank-v2` is now installed and committed to the master configuration.
 Verify it under **Applications → Application Types → WebSphere enterprise applications**.
