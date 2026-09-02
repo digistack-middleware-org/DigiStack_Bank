@@ -139,7 +139,7 @@ Expected output:
 ```
  id | username  |     role      |  full_name  | is_active
 ----+-----------+---------------+-------------+-----------
-  1 | customer1 | CUSTOMER      | Ravi Kumar  | t
+  1 | customer1 | CUSTOMER      | peta venkatesh | t
   2 | admin1    | ADMINISTRATOR | Admin User  | t
 (2 rows)
 ```
