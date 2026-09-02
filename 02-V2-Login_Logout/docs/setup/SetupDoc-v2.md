@@ -91,3 +91,167 @@ Version-specific items:
 ### §4.2 wsadmin / Command-Line Steps
 
 1. Deployment script — `scripts/v2_deploy.py` run via:
+
+wsadmin.sh -lang jython -username wasadmin -password <redacted>
+-f /tmp/v2_deploy.py
+
+   Result: `=== Deployment complete. ===`
+   Old application (`digistack-bank-v1`) uninstalled,
+   new application (`digistack-bank-v2`) installed and started,
+   application state: STARTED.
+
+2. backupConfig:
+
+./backupConfig.sh
+/opt/backups/was-config/devdsbinappserver01_v2_backup.zip
+
+   Result: `ADMU5002I: XXX files successfully backed up`
+
+### §4.3 Database Changes
+
+Migration executed on dsb-db:
+
+psql -U digistack_app -d digistack_bank -h 127.0.0.1
+-f /tmp/V2__create_users.sql
+
+
+Output:
+
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+INSERT 0 1
+INSERT 0 1
+
+
+Password hashes set by running SeedUsers utility on Windows laptop:
+
+java -cp "digistack-bank-web\target\classes;C:\Tools\postgresql-42.7.3.jar"
+com.digistack.bank.util.SeedUsers
+
+
+Output:
+
+Connected to digistack_bank on dsb-db.
+Updated customer1 with correct password hash.
+Updated admin1 with correct password hash.
+Seed complete. Both users ready for login.
+
+
+Rollback script (not executed, on file):
+`db/rollback/V2__rollback_users.sql`
+
+Verification:
+
+SELECT username, role, is_active, LENGTH(password_hash)
+FROM users;
+
+Result: 2 rows, both is_active=true, hash length=64 (SHA-256 hex).
+
+### §4.4 Application Deployment
+
+Build command (run on Windows laptop):
+
+cd C:\Projects\digistack-bank-parent
+mvn clean package
+
+Result: `BUILD SUCCESS`, produces
+`digistack-bank-ear\target\digistack-bank-v2.ear`.
+
+Hand-off to WAS VM:
+
+scp digistack-bank-v2.ear root@192.168.10.10:/tmp/
+scp scripts/v2_deploy.py root@192.168.10.10:/tmp/
+
+
+Deployed via Admin Console (§4.1 steps 2–5) first to prove GUI path,
+then re-deployed via `v2_deploy.py` (§4.2 step 1) to prove scripted
+path — both confirmed working.
+
+New files in this version:
+- `src/main/webapp/Login.jsp` — branded login page
+- `src/main/webapp/Dashboard.jsp` — post-login dashboard
+- `src/main/java/.../LoginServlet.java` — credential validation
+- `src/main/java/.../DashboardServlet.java` — session guard + display
+- `src/main/java/.../LogoutServlet.java` — session invalidation
+- `src/main/java/.../util/PasswordUtil.java` — SHA-256 hashing
+- `src/main/java/.../util/SeedUsers.java` — one-time seed utility
+- `db/migrations/V2__create_users.sql` — users table
+- `db/rollback/V2__rollback_users.sql` — rollback script
+- `scripts/v2_deploy.py` — wsadmin deployment script
+
+---
+
+## §5 Verification Steps
+
+See `TestCases-v2.md` for full detail. Summary:
+- v1 Regression Pack (13 cases): all Pass
+- 7/7 Critical v2 cases: Pass
+- 7/7 High v2 cases: Pass
+- 4/4 Medium v2 cases: Pass
+- 2/2 Low v2 cases: Pass
+- Grand total: 33/33 cases Pass
+
+---
+
+## §6 Rollback Procedure
+
+**Option A — VM Snapshot Restore (fastest):**
+1. VMware Workstation → dsb-dmgr → Snapshot → Revert to pre-v2 snapshot.
+2. Repeat for dsb-db if database rollback also needed.
+
+**Option B — Manual Undo:**
+1. Stop and uninstall `digistack-bank-v2` via Admin Console.
+2. Restore WAS config from v1 backup:
+
+./stopServer.sh server1 -username wasadmin -password <redacted>
+./restoreConfig.sh
+/opt/backups/was-config/devdsbinappserver01_v1_backup.zip
+./startServer.sh server1
+
+3. Reinstall `digistack-bank-v1.ear` via Admin Console.
+4. Roll back the database:
+
+psql -U digistack_app -d digistack_bank -h 127.0.0.1
+-f db/rollback/V2__rollback_users.sql
+
+   Result: `DROP TABLE` — users table removed.
+5. Verify: `\dt` in psql shows only `app_config`, no `users` table.
+
+---
+
+## §7 Known Issues / Troubleshooting
+
+| Issue | Cause | Resolution |
+|---|---|---|
+| SeedUsers fails with `Connection refused` | dsb-db VM not powered on, or port 5432 not open | Confirm `systemctl status postgresql-16` on dsb-db, confirm firewall rule for 5432 |
+| Login always fails even with correct password | SeedUsers not run after V2 migration — password_hash still PLACEHOLDER | Run SeedUsers utility again, verify hash length = 64 in DB |
+| Dashboard shows blank email | email attribute not set in DashboardServlet | Confirmed fixed in Sprint 4 — DashboardServlet reads email from session |
+
+**Known Technical Debt (carried forward):**
+- Direct JDBC with hardcoded credentials in LoginServlet,
+  DashboardServlet — replaced at v7 with JNDI DataSource (jdbc/BankDS)
+- App-layer authentication only (username/password check in servlet) —
+  no WAS security roles yet. WAS security roles introduced at v10
+  (Administrative Security topic)
+
+---
+
+## §8 Sign-off Table
+
+| Item | Status |
+|---|---|
+| Setup completed | ✅ |
+| Verification passed | ✅ (33/33 test cases — see TestCases-v2.md) |
+| Documentation reviewed | ✅ |
+| backupConfig baseline captured | ✅ — `devdsbinappserver01_v2_backup.zip` |
+| Smoke test passed | ✅ — 7/7 checks |
+| Reviewed by | _________________ |
+| Approved date | _________________ |
+
+---
+
+*This is SetupDoc-v2.md. Companion: TestCases-v2.md (test detail),
+FaultDrill-v2.md (Sprint 8, non-gating).*
