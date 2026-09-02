@@ -67,7 +67,7 @@ Verify it under **Applications → Application Types → WebSphere enterprise ap
 
 ```
 grep -E "LoginServlet|LogoutServlet|DashboardServlet|HomeServlet" \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log \
+  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log \
   | tail -10
 ```
 Expected result — you should see init messages for all four servlets:
