@@ -2,9 +2,10 @@
   ### A user logs in, sees their live account on the Dashboard, deposits or withdraws money
 
   ## Request Flow
-```
-![Request-Flow](images/V3-Request_Flow.png)
-```
+
+<img src="03-V3-Money_Transfer/images/V3-Layer-Layer-Flow.png" width="800">
+
+
    ## Layer-by-Layer Request Flow
 
 ```
