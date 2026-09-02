@@ -3,12 +3,12 @@
 
   ## Request Flow
 ```
-(images/V3-Request_Flow.png)
+![Request-Flow](images/V3-Request_Flow.png)
 ```
    ## Layer-by-Layer Request Flow
 
 ```
-(images/V3-Layer-Layer-Flow.png)
+![Layer-By-Layer_Flow](images/V3-Layer-Layer-Flow.png)
 
 ```
 ```
