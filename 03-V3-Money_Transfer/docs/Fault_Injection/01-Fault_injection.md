@@ -17,7 +17,6 @@ Then confirm the account balance reads correctly from the DB:
 psql -U digistack_app -d digistack_bank -h 127.0.0.1 \
   -c "SELECT id, balance, is_frozen FROM accounts user_id = 1;"
 ```
-password D!g!St@ck2026# when prompted.
 
 Expected result — one row showing a positive balance and is_frozen = f:
 ```
@@ -36,6 +35,7 @@ chmod 000 \
   /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
 ```
 No output is expected. That is correct.
+
 Step 3 — Confirm the injection was applied
 ```
  -lh \
@@ -59,7 +59,7 @@ Step 4.3
 On the dsb-dmgr VM, attempt to read the log:
 ```
 tail -20 \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
 ```
 👉 Observe what happens. Note it down.
 Step 4.
@@ -67,7 +67,7 @@ Step 4.
 Attempt to grep the log for AccountServlet entries:
 ```
 grep "AccountServlet" \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
 ```
 👉 Observe what happens. Note it down.
 
