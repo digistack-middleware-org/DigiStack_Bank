@@ -687,7 +687,7 @@
 <footer class="dsb-footer">
     <div class="container">
         <strong>DigiStack Bank</strong> &mdash;
-        &copy; 2026. For educational purposes only. v3
+        &copy; 2026. For educational purposes only. v4
     </div>
 </footer>
 
