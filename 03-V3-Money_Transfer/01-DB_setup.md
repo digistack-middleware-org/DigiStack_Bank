@@ -129,22 +129,30 @@ The new users table stores:
 
 ### Deploy in Localhost {DB server}
 ```
-psql -h localhost -U digistack_app -d digistack_bank -f V2__create_users.sql
+psql -h localhost -U digistack_app -d digistack_bank -f V3__create_accounts.sql
 ```
 #### Verification
+Verify the table and seed data:
 ```
-psql -U digistack_app -d digistack_bank -h localhost -c "SELECT id, username, role, full_name, is_active FROM users;"
+psql -U digistack_app -d digistack_bank -h localhost -c "SELECT id, user_id, account_number, account_type, balance, is_frozen FROM accounts;"
 ```
 Expected output:
 ```
- id | username  |     role      |  full_name  | is_active
-----+-----------+---------------+-------------+-----------
-  1 | customer1 | CUSTOMER      | peta venkatesh | t
-  2 | admin1    | ADMINISTRATOR | Admin User  | t
+ id | user_id | account_number | account_type |  balance  | is_frozen
+----+---------+----------------+--------------+-----------+-----------
+  1 |       1 | DSB0000000001  | SAVINGS      | 50000.00  | f
+  2 |       2 | DSB0000000002  | SAVINGS      | 10000.00  | f
 (2 rows)
 ```
+Confirm the foreign key is enforced:
+```
+psql -U digistack_app -d digistack_bank -h localhost \
+  -c "INSERT INTO accounts (user_id, account_number, account_type, balance) VALUES (999, 'DSB9999999999', 'SAVINGS', 100.00);"
+```
+Expected result — PostgreSQL rejects the insert:
+```
+ERROR:  insert or update on table "accounts" violates foreign key constraint "fk_accounts_user_id"
+DETAIL:  Key (user_id)=(999) is not present in table "users".
+```
+This confirms the foreign key is working — user ID 999 does not exist in the users table.
 
-Verify the hashes are now set in the database. On dsb-db:
-```
-psql -U digistack_app -d digistack_bank -h localhost -c "SELECT username, password_salt, LEFT(password_hash,16) || '...' AS hash_preview FROM users;"
-```

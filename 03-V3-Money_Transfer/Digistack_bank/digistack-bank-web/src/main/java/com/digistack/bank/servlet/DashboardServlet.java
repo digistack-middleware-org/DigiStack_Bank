@@ -1,10 +1,6 @@
 package com.digistack.bank.servlet;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.servlet.ServletException;
@@ -14,37 +10,37 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.digistack.bank.model.Account;
+import com.digistack.bank.service.AccountService;
+
 /**
- * DashboardServlet — P01 v2
+ * DashboardServlet — P01 v3 (updated)
  *
  * Handles GET /Dashboard
  *
  * Responsibilities:
- *   1. Session guard — redirect to /Login if no valid session exists.
+ *   1. Session guard — redirect to /Login if no valid session.
  *   2. Read session attributes set by LoginServlet.
- *   3. Determine time-of-day greeting (Morning/Afternoon/Evening)
- *      using server-side time — no JS date logic needed.
- *   4. Forward to Dashboard.jsp with all display attributes set.
+ *   3. Load the user's account via AccountService — provides
+ *      masked account number, type, and frozen status for display.
+ *   4. Determine time-of-day greeting (server-side).
+ *   5. Forward to Dashboard.jsp with all display attributes set.
  *
- * At v2 the Dashboard shows:
- *   - Greeting with name (username fallback until v15 adds full name)
- *   - Last login timestamp (security signal)
- *   - Account summary placeholder (live at v3)
- *   - Quick action tiles (Deposit/Withdraw live at v3; others coming soon)
+ * v3 change: AccountService call added to load account data.
+ *   Dashboard now shows live account number and frozen status.
+ *   Balance is fetched separately via /BalanceJson (AJAX).
  *
- * TECHNICAL DEBT (v2): Direct JDBC present for future use.
- * Replaced at v7 with WAS-managed JNDI DataSource (jdbc/BankDS).
+ * TECHNICAL DEBT (v3): AccountService uses direct JDBC.
+ * Replaced at v7 with JNDI DataSource (jdbc/BankDS).
  */
-@WebServlet(name = "DashboardServlet", urlPatterns = {"/Dashboard", "/dashboard"})
+@WebServlet(name = "DashboardServlet",
+            urlPatterns = {"/Dashboard", "/dashboard"})
 public class DashboardServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    // Direct JDBC — replaced at v7 with JNDI DataSource
-    private static final String JDBC_URL =
-        "jdbc:postgresql://192.168.10.30:5432/digistack_bank";
-    private static final String JDBC_USER     = "digistack_app";
-    private static final String JDBC_PASSWORD = "Wasadmin@951951";
+    private final AccountService accountService =
+        new AccountService();
 
     @Override
     public void init() throws ServletException {
@@ -53,7 +49,8 @@ public class DashboardServlet extends HttpServlet {
             log("DashboardServlet: PostgreSQL JDBC driver loaded.");
         } catch (ClassNotFoundException e) {
             throw new ServletException(
-                "DashboardServlet init failed — JDBC driver not found.", e);
+                "DashboardServlet init failed — " +
+                "JDBC driver not found.", e);
         }
     }
 
@@ -63,38 +60,32 @@ public class DashboardServlet extends HttpServlet {
             throws ServletException, IOException {
 
         // ── Session Guard ──
-        // request.getSession(false) returns the existing session
-        // without creating a new one. Returns null if no session exists.
         HttpSession session = request.getSession(false);
-
         if (session == null ||
-            session.getAttribute("username") == null) {
-            // No valid session — redirect to login page
-            log("DashboardServlet: No session — redirecting to Login.");
+                session.getAttribute("username") == null) {
+            log("DashboardServlet: No session — " +
+                "redirecting to Login.");
             response.sendRedirect(
                 request.getContextPath() + "/Login");
             return;
         }
 
         // ── Read Session Attributes ──
-        // These were set by LoginServlet on successful login.
         String username  = (String) session.getAttribute("username");
         String fullName  = (String) session.getAttribute("fullName");
         String role      = (String) session.getAttribute("role");
         String lastLogin = (String) session.getAttribute("lastLogin");
+        String email     = (String) session.getAttribute("email");
+        int    userId    = (Integer) session.getAttribute("userId");
 
-        // Use fullName if available, fall back to username.
-        // fullName is always set from v2 onward since users.full_name
-        // is populated at seeding — this fallback is defensive coding.
-        String displayName = (fullName != null && !fullName.isEmpty())
+        // Display name — fullName preferred, username as fallback
+        String displayName =
+            (fullName != null && !fullName.isEmpty())
             ? fullName : username;
 
         // ── Time-of-Day Greeting ──
-        // Determined server-side using the WAS server's clock.
-        // No JavaScript date logic needed.
         java.util.Calendar cal = java.util.Calendar.getInstance();
         int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
-
         String greeting;
         if (hour >= 5 && hour < 12) {
             greeting = "Good Morning";
@@ -104,20 +95,46 @@ public class DashboardServlet extends HttpServlet {
             greeting = "Good Evening";
         }
 
-        // ── Read email from session ──
-        // Set by LoginServlet at login time from the users table.
-        String email = (String) session.getAttribute("email");
-        if (email == null) email = "";
+        // ── Load Account Data ──
+        // Used to display masked account number, account type,
+        // and frozen status on the Dashboard account card.
+        // Balance is fetched separately via /BalanceJson (AJAX)
+        // when the user clicks View Balance — not loaded here
+        // on every Dashboard visit to keep the page fast.
+        Account account    = null;
+        String accountError = null;
+
+        try {
+            account = accountService.getAccountByUserId(userId);
+            if (account == null) {
+                accountError = "No account linked to this user.";
+                log("DashboardServlet: No account found " +
+                    "for userId=" + userId);
+            } else {
+                log("DashboardServlet: Account loaded for " +
+                    "userId=" + userId +
+                    " accountNumber=" +
+                    account.getAccountNumber() +
+                    " frozen=" + account.isFrozen());
+            }
+        } catch (SQLException e) {
+            accountError = "Could not load account details.";
+            log("DashboardServlet: DB error loading account " +
+                "for userId=" + userId +
+                " — " + e.getMessage(), e);
+        }
 
         // ── Set Request Attributes for Dashboard.jsp ──
-        request.setAttribute("displayName", displayName);
-        request.setAttribute("username",    username);
-        request.setAttribute("role",        role);
-        request.setAttribute("lastLogin",   lastLogin);
-        request.setAttribute("greeting",    greeting);
-        request.setAttribute("email",       email);
+        request.setAttribute("displayName",  displayName);
+        request.setAttribute("username",     username);
+        request.setAttribute("role",         role);
+        request.setAttribute("lastLogin",    lastLogin);
+        request.setAttribute("greeting",     greeting);
+        request.setAttribute("email",        email);
+        request.setAttribute("account",      account);
+        request.setAttribute("accountError", accountError);
 
-        // ── Forward to Dashboard.jsp ──
+        // Forward to Dashboard.jsp
         request.getRequestDispatcher("/Dashboard.jsp")
                .forward(request, response);
     }

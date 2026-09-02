@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.digistack.bank.model.Account" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,10 +121,8 @@
             animation: fadeInUp 0.5s ease-out 0.1s both;
         }
 
-        /* ── Frozen Account Banner ──
-           Hidden at v2 — shown at v6 when is_frozen is introduced. */
+        /* ── Frozen Account Banner ── */
         .frozen-banner {
-            display: none;
             background-color: #fff3cd;
             border: 1px solid #ffc107;
             border-radius: 10px;
@@ -131,7 +130,8 @@
             margin-bottom: 20px;
             font-size: 0.9rem;
             color: #856404;
-        }
+            font-weight: 600;
+        }   
 
         /* ── Account Card ── */
         .account-card {
@@ -354,6 +354,14 @@
     </style>
 </head>
 <body>
+<%
+    Account dashAccount =
+        (Account) request.getAttribute("account");
+    String accountError =
+        (String) request.getAttribute("accountError");
+    boolean isFrozen = (dashAccount != null &&
+                        dashAccount.isFrozen());
+%>
 
 <!-- ═══════════════════════════════════════════
      TOP NAVBAR
@@ -448,63 +456,104 @@
                     Here is your account overview.
                 </p>
 
-                <!-- Frozen Banner — hidden at v2, shown at v6 -->
-                <div class="frozen-banner" id="frozenBanner">
+                <!-- Frozen Banner — wired at v3 via isFrozen flag.
+                     Freeze/Unfreeze action introduced at v6. -->
+                <% if (isFrozen) { %>
+                <div class="frozen-banner"
+                     style="display:block;">
                     <i class="bi bi-lock-fill me-2"></i>
-                    Your account is frozen — please contact support.
+                    Your account is frozen — please contact
+                    support to restore access.
                 </div>
+                <% } %>
 
                 <!-- Account Card -->
+                <%
+                    if (accountError != null) {
+                %>
+                <div style="background:#fff3cd;border:1px solid
+                            #ffc107;border-radius:12px;padding:
+                            14px 18px;margin-bottom:20px;
+                            color:#856404;font-size:0.88rem;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <%= accountError %>
+                </div>
+                <%
+                    }
+                %>
+
+                <% if (dashAccount != null) { %>
                 <div class="account-card mb-4">
-                    <div class="account-type">Savings Account</div>
+
+                    <%-- Frozen banner — shown when is_frozen = true.
+                         Introduced at v3; freeze/unfreeze action
+                         added at v6. --%>
+                    <% if (isFrozen) { %>
+                    <div style="background:rgba(255,193,7,0.15);
+                                border:1px solid rgba(255,193,7,0.4);
+                                border-radius:8px;padding:8px 14px;
+                                margin-bottom:16px;font-size:0.82rem;
+                                color:#ffc107;font-weight:600;">
+                        <i class="bi bi-lock-fill me-2"></i>
+                        Your account is frozen — please contact support.
+                    </div>
+                    <% } %>
+
+                    <div class="account-type">
+                        <%= dashAccount.getAccountType() %> Account
+                    </div>
                     <div class="account-name">${displayName}</div>
                     <div class="account-number">
-                        •••• •••• •••• 0001
+                        <%= dashAccount.getMaskedAccountNumber() %>
                     </div>
                     <div class="balance-label">Available Balance</div>
 
-                    <%-- Balance hidden by default — JS toggle reveals it.
-                         Live balance wired at v3 via AccountServlet. --%>
                     <div id="balanceHidden" class="balance-hidden">
                         ••••••
                     </div>
                     <div id="balanceVisible"
                          class="balance-value"
                          style="display:none;">
-                        <span class="account-coming-soon">
-                            Available at v3
-                        </span>
+                        <span id="liveBalance">Loading...</span>
                     </div>
 
                     <button class="btn-view-balance"
-                            onclick="toggleBalance()" id="balanceBtn">
+                            onclick="toggleBalance()"
+                            id="balanceBtn"
+                            <%= isFrozen ? "disabled style='opacity:0.5;cursor:not-allowed;'" : "" %>>
                         <i class="bi bi-eye me-1"></i>View Balance
                     </button>
+
                 </div>
+                <% } %>
 
                 <!-- Quick Actions -->
                 <div class="section-title">Quick Actions</div>
                 <div class="quick-actions-row mb-4">
 
-                    <span class="quick-action-tile disabled-tile">
+                    <a href="Account" class="quick-action-tile">
                         <div class="tile-icon"
                              style="background:#e8f4fd;">
                             <i class="bi bi-arrow-down-circle"
                                style="color:#2196f3;"></i>
                         </div>
                         <div class="tile-label">Deposit</div>
-                        <div class="tile-sublabel">Coming — v3</div>
-                    </span>
+                        <div class="tile-sublabel">
+                            Add funds
+                        </div>
+                    </a>
 
-                    <span class="quick-action-tile disabled-tile">
+                    <a href="Account" class="quick-action-tile">
                         <div class="tile-icon"
                              style="background:#fff3e0;">
                             <i class="bi bi-arrow-up-circle"
                                style="color:#ff9800;"></i>
                         </div>
                         <div class="tile-label">Withdraw</div>
-                        <div class="tile-sublabel">Coming — v3</div>
-                    </span>
+                        <div class="tile-sublabel">
+                            Withdraw funds
+                        </div>
+                    </a>
 
                     <span class="quick-action-tile disabled-tile">
                         <div class="tile-icon"
@@ -612,19 +661,40 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Balance toggle — reveal/hide without page reload.
-    // Live balance value wired at v3 via AccountServlet/DAO.
+    // Balance toggle — fetches live balance from /Account on reveal
     var balanceShown = false;
     function toggleBalance() {
         var hidden  = document.getElementById('balanceHidden');
         var visible = document.getElementById('balanceVisible');
         var btn     = document.getElementById('balanceBtn');
+        var liveEl  = document.getElementById('liveBalance');
         balanceShown = !balanceShown;
         if (balanceShown) {
             hidden.style.display  = 'none';
             visible.style.display = 'block';
             btn.innerHTML =
                 '<i class="bi bi-eye-slash me-1"></i>Hide Balance';
+            // Fetch live balance via a lightweight AJAX call
+            // to a dedicated balance endpoint added in Sprint 3.
+            // Falls back to "View in Account" link if fetch fails.
+            fetch('BalanceJson')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data && data.balance) {
+                        liveEl.textContent = data.balance;
+                    } else {
+                        liveEl.innerHTML =
+                            '<a href="Account" ' +
+                            'style="color:var(--db-gold);' +
+                            'font-size:0.9rem;">View in Account</a>';
+                    }
+                })
+                .catch(function() {
+                    liveEl.innerHTML =
+                        '<a href="Account" ' +
+                        'style="color:var(--db-gold);' +
+                        'font-size:0.9rem;">View in Account</a>';
+                });
         } else {
             hidden.style.display  = 'block';
             visible.style.display = 'none';

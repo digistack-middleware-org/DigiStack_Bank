@@ -1,8 +1,38 @@
-# Deploying digistack-bank-v2.ear to WebSphere Application Server (Admin Console)
+# Deploying digistack-bank-v3.ear to WebSphere Application Server (Admin Console)
+# Configure ClassLoader via Admin Console
+Step 1.1 — Open the Admin Console:
+```
+http://192.168.10.10:9060/ibm/console
+```
 
+Log in as wasadmin.
+
+Step 1.2 — Navigate to the application's ClassLoader settings:
+```
+Applications → Application Types → WebSphere enterprise applications
+```
+Click on digistack-bank-v2 {(still v2 at this point — v3 EAR is Not yet deployed}
+
+Step 1.3 — On righ Hand Side, Click on 
+```
+Detail Properties section → Class loading and update detection
+```
+
+Step 1.4 — Configure these settings:
+```
+Class loader order ==>  select Classes loaded with parent class loader first (PARENT_FIRST)
+WAR class loader policy ==>  select Single class loader for application
+```
+Click on OK and Save the configurations
+
+#### Stop and restart server1 to apply the ClassLoader configuration:
+```
+/apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/bin/stopServer.sh server1
+/apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/bin/startServer.sh server1
+```
 ## Prerequisites
 - Admin Console URL: `https://<host>:9043/ibm/console`
-- EAR file already staged on the VM at `/opt/staging/ears/digistack-bank-v2.ear`
+- EAR file already staged on the VM at `/opt/staging/ears/digistack-bank-v3.ear`
 
 ---
 
@@ -19,7 +49,7 @@
 - Choose **Remote file system** (since the EAR is already on the VM, not your browser's machine).
 - Click **Browse** → navigate to:
   ```
-  /opt/staging/ears/digistack-bank-v2.ear
+  /opt/staging/ears/digistack-bank-v3.ear
   ```
 - Click **Next**.
 
@@ -29,7 +59,7 @@
 
 ### 5. Select Installation Options
 - Leave defaults.
-- Confirm **Application name** shows `digistack-bank-v2` (or similar, auto-derived from the EAR).
+- Confirm **Application name** shows `digistack-bank-v3` (or similar, auto-derived from the EAR).
 - Click **Next**.
 
 ### 6. Map Modules to Servers
@@ -60,19 +90,18 @@
 ---
 
 ## ✅ Deployment Complete
-The application `digistack-bank-v2` is now installed and committed to the master configuration.
+The application `digistack-bank-v3` is now installed and committed to the master configuration.
 Verify it under **Applications → Application Types → WebSphere enterprise applications**.
 
 # Step 4.3 — Confirm the server log shows the new servlets initialised
 
 ```
-grep -E "LoginServlet|LogoutServlet|DashboardServlet|HomeServlet" \
+grep -E "DashboardServlet|AccountServlet" \
   /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log \
-  | tail -10
+  | tail -5
 ```
 Expected result — you should see init messages for all four servlets:
 ```
-HomeServlet: PostgreSQL JDBC driver loaded successfully.
-LoginServlet: ...
-DashboardServlet: PostgreSQL JDBC driver loaded successfully.
+DashboardServlet: PostgreSQL JDBC driver loaded.
+DashboardServlet: Account loaded for userId=1 ...
 ```
