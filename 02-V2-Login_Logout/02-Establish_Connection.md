@@ -38,7 +38,7 @@ Expected output:
 ```
  id | username  |     role      |  full_name  | is_active
 ----+-----------+---------------+-------------+-----------
-  1 | customer1 | CUSTOMER      | Ravi Kumar  | t
+  1 | customer1 | CUSTOMER      | peta venkatesh  | t
   2 | admin1    | ADMINISTRATOR | Admin User  | t
 (2 rows)
 ```
@@ -74,7 +74,7 @@ The Problem
 
 Imagine you store a user's password directly in the database:
 ```
-username: ravi    |    password: MySecret123
+username: venkatesh    |    password: MySecret123
 ```
 If a hacker steals your database, they now know everyone's password instantly. This is a disaster. So we never, ever store the actual password.
 
