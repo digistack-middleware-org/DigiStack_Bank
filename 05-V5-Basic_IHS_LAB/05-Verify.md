@@ -156,7 +156,7 @@ grep "HomeServlet" \
 
 ```
 HomeServlet: DB read successful. bank.name=DigiStack Bank
-```
+
 
 This confirms **all three**:
 
