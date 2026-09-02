@@ -1,119 +1,126 @@
-# ✅ Fix — Restore the Environment (INC-v3-001)
+# Fix — Restore the Environment
 
-## Step 1 — Restore the correct permissions
+## Step 1 — Uncomment the directive
 
-On the **dsb-dmgr** VM:
+On the **dsb-ihs** VM:
 
 ```bash
-chmod 640 \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+sed -i 's/#WebSpherePluginConfig/WebSpherePluginConfig/' \
+  /apps/IBM/HTTPServer/conf/httpd.conf
 ```
 
-> 💡 **Concept — `chmod 640`:** Owner (WAS process / root) gets read+write (`6`), group gets read-only (`4`), others get nothing (`0`). This is the standard permission for a log file owned by the WAS process user — readable by the admin group for monitoring, writable only by the owner.
-
-No output is expected. That is correct.
-
----
-
-## Step 2 — Confirm permissions are restored
+## Step 2 — Confirm the fix was applied
 
 ```bash
-ls -lh \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+grep "WebSpherePluginConfig" /apps/IBM/HTTPServer/conf/httpd.conf
+```
+
+**Expected result — the line no longer has a `#`:**
+
+```
+WebSpherePluginConfig /apps/IBM/WebSphere/Plugins/config/webserver1/plugin-cfg.xml
+```
+
+## Step 3 — Test the configuration syntax before restarting
+
+Good practice reinforced from Sprint 4:
+
+```bash
+/apps/IBM/HTTPServer/bin/apachectl configtest
 ```
 
 **Expected result:**
 
 ```
--rw-r----- 1 root root 2.1M ... SystemOut.log
+Syntax OK
 ```
 
-`-rw-r-----` = owner read+write, group read, others none. ✅ Correct.
-
----
-
-## Step 3 — Confirm the log is now readable
+## Step 4 — Restart IHS
 
 ```bash
-tail -20 \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
-``**Expected result:** The last 20 lines of the log appear **without a permission error**. You should see WAS startup messages and servlet init lines.
-
----
-
-## Step 4 — Force WAS to write a fresh log entry
-
-Open the browser and navigate to:
-
-```
-http://192.168.10.10:9080/digistack-bank/Home
+/apps/IBM/HTTPServer/bin/apachectl stop
+/apps/IBM/HTTPServer/bin/apachectl start
 ```
 
----
+## Step 5 — Confirm the fix in the browser (bare IHS root)
 
-## Step 5 — Confirm new entries are appearing
+First test the bare IHS root:
 
-```bash
-tail -5 \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+```
+http://192.168.10.20
 ```
 
-**Expected result:** You see **new timestamped entries** after the page load. The log is live again. ✅
+**Expected result:** IHS default page loads normally (**HTTP 200**, not 500). ✅
 
----
+## Step 6 — Confirm the application path
 
-## Step 6 — Confirm AccountServlet transactions are logging correctly
-
-Perform a small deposit (**100**) in the browser, then:
-
-```bash
-grep "AccountServlet" \
-  /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log \
-  | tail -3
+```
+http://192.168.10.20/digistack-bank/Home
 ```
 
 **Expected result:**
 
-```
-AccountServlet: Deposit successful. userId=1 amount=100 newBalance=₹XXXXX.XX
+- Home page renders correctly
+- **Database: Connected** in green
+- Footer shows **v4 — Application Lifecycle**
+
+## Step 7 — Confirm the IHS error_log shows no further module errors
+
+```bash
+tail -10 /apps/IBM/HTTPServer/logs/error_log
 ```
 
-The audit trail is restored. ✅
+**Expected result:** no `mod_was_ap22_http` error lines after the restart timestamp.
+
+## Step 8 — Full regression check
+
+Log in as `customer1` / `Customer@123` via IHS, confirm Dashboard, perform a small deposit, confirm Logout — **full path proven working again**. ✅
 
 ---
 
-## 🛡️ Prevention
+# Prevention
 
-### 1. Check file permissions as the FIRST diagnostic step
-On any **"log gone silent"** alert, the sequence is:
+## What Would Have Caught This Faster
 
-```
-alert fires → ls -lh SystemOut.log → ---------- permissions = immediate diagnosis
-```
+### 1. `apachectl configtest` before every restart — unconditionally
 
-The entire investigation should take **under 60 seconds** once you know this pattern.
+This is the **single most important habit** from this drill.
 
-### 2. `lsof` to confirm the JVM is still holding the file open
-If permissions are wrong but the process still has the file descriptor open from before the `chmod`, some writes may still succeed (on Linux, **open file descriptors survive permission changes**). If the descriptor was also closed — for example after a log rotation — no writes would succeed at all. `lsof` immediately distinguishes these two cases.
+> ⚠️ **Critical nuance:** a commented-out `WebSpherePluginConfig` line does **NOT** fail `configtest` — Apache considers a loaded-but-unconfigured module a **runtime issue, not a syntax error**. This means `configtest` alone is not sufficient to catch this specific fault.
 
-### 3. Immutable file attributes as a guard
-In production, critical log files are often protected with `chattr +a` (**append-only attribute**) — this prevents `chmod`, `rm`, and overwrite operations while still allowing the logging process to append. A junior admin running `chmod 000` on an append-only file would get:
+> **Lesson to internalize: syntax validity ≠ functional correctness.**
 
-```
-Operation not permitted
-```
+### 2. Post-restart smoke test on the bare root path, not just the application path
 
-### 4. Separate log monitoring user with read-only access
-The monitoring pipeline's tailer process should run as a **dedicated low-privilege user** with read-only access to the logs directory. When that user receives `Permission denied`, the alert fires. This is exactly what happened here — the monitoring pipeline was the only thing that caught the fault### 5. Observability (P04 onward)
-- **Prometheus + Grafana** — monitors the WAS JVM's own metrics including log write errors and file descriptor counts.
-- **OpenSearch** — ingests log lines; a sudden drop in ingestion rate from a healthy JVM triggers a **"log pipeline broken"** alert automatically, regardless of whether the external tailer is running.
-
-### 6. Audit trail for chmod operations on log directories
-The Linux audit daemon (`auditd`) can log every `chmod` or `chown` call on the WAS logs directory:
+If the on-call admin's first check after any IHS config change is:
 
 ```bash
-auditctl -w /opt/IBM/WebSphere/AppServer/profiles/ \
-  -p wa -k was_log_changes
+curl http://192.168.10.20
 ```
 
-This would have immediately identified **which user ran the `chmod 000` and when** — closing the *"a junior admin did a routine log rotation check"* ambiguity in the incident ticket.
+*(no path)* — and it returns anything other than **HTTP 200**, that is an **instant, unambiguous signal** that IHS itself — independent of any WAS routing — is broken.
+
+This is a **faster and more diagnostic** first check than testing the application URL directly.
+
+### 3. Never comment out one half of a directive pair
+
+`LoadModule` and `WebSpherePluginConfig` are a **matched pair** — loading the module without configuring it is a broken half-state that is:
+
+- **Easy to introduce accidentally** (e.g., commenting out a line while editing nearby content)
+- **Hard to spot visually** in a long config file
+
+### 4. Configuration change diffing
+
+Before restarting IHS after any manual edit, run:
+
+```bash
+diff /apps/IBM/HTTPServer/conf/httpd.conf \
+     /apps/IBM/HTTPServer/conf/httpd.conf.backup-v4.5
+```
+
+This immediately surfaces exactly what changed — a **single `#` character addition** — **before the restart is even performed**, catching the mistake pre-emptively.
+
+### 5. Version control for httpd.conf
+
+Since `httpd.conf` lives outside the project's Git repository (it is VM-local, as noted in **SetupDoc-v4.5.md §4.4**), consider committing a copy of `httpd.conf` to Git after every verified-working state — specifically so that `git diff` can be used the same way `diff` was used above, **with full history**, not just a single backup file.
+

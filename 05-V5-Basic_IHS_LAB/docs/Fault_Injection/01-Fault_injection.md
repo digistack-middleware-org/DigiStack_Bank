@@ -1,86 +1,121 @@
-# Fault Injection Lab — SystemOut.log Permission Fault
+# Phase 1 — Fault Injection
 
-## Step 1 — Confirm the environment is clean before injecting
+> ⚠️ **Perform every step exactly. Do not skip any step.**
 
-On the **dsb-dmgr** VM:
+---
+
+## Step 1 — Confirm the Environment Is Clean Before Injecting
+
+### Step 1.1 — Test the Home page in the browser
+
+On your Windows browser:
+
+```
+http://192.168.10.20/digistack-bank/Home
+```
+
+**Expected result before injection:**
+
+- Home page loads normally via IHS
+- Footer shows **v4 — Application Lifecycle**
+- **Database: Connected** in green
+
+### Step 1.2 — Confirm IHS is running on dsb-ihs
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" \
-  http://192.168.10.10:9080/digistack-b/Home
-```
-Expected result before injection:
-```
-200
-```
-Then confirm the account balance reads correctly from the DB:
-```
-psql -U digistack_app -d digistack_bank -h 127.0.0.1 \
-  -c "SELECT id, balance, is_frozen FROM accounts user_id = 1;"
+ps aux | grep httpd | grep -v grep
 ```
 
-Expected result — one row showing a positive balance and is_frozen = f:
+**Expected result:** `httpd` processes listed.
+
+> 🛑 **If the environment is not clean, stop and let me know before continuing.**
+
+---
+
+## Step 2 — Inject the Fault
+
+On the **dsb-ihs** VM, run:
+
+```bash
+sed -i 's/WebSpherePluginConfig/#WebSpherePluginConfig/' \
+  /apps/IBM/HTTPServer/conf/httpd.conf
 ```
- id |  balance  | is_frozen
-----+-----------+-----------
-  1 | XXXXX.00  | f
-(1 row)
+
+**Expected result:** no output. That is correct. ✅
+
+> **What this does:** the `sed` command comments out the `WebSpherePluginConfig` directive in `httpd.conf` by prepending a `#`. Once commented, the plugin no longer knows where to find its routing table.
+
+---
+
+## Step 3 — Confirm the Injection Was Applied
+
+```bash
+grep "WebSpherePluginConfig" /apps/IBM/HTTPServer/conf/httpd.conf
 ```
-    ⚠️ If the environment is not clean, stop and escalate before continuing.
 
-Step 2 — Inject the fault
+**Expected result — the line now shows a `#` at the start:**
 
-Run this command on the dsb-dmgr VM:
 ```
-chmod 000 \
-  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+#WebSpherePluginConfig /apps/IBM/WebSphere/Plugins/config/webserver1/plugin-cfg.xml
 ```
-No output is expected. That is correct.
 
-Step 3 — Confirm the injection was applied
+---
+
+## Step 4 — Restart IHS to Activate the Change
+
+```bash
+/apps/IBM/HTTPServer/bin/apachectl stop
+/apps/IBM/HTTPServer/bin/apachectl start
 ```
- -lh \
-  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+
+**Expected result:** no error output from either command.
+
+### Step 4.1 — Confirm IHS restarted successfully
+
+```bash
+ps aux | grep httpd | grep -v grep
 ```
-Expected result — permissions show ----------:
 
----------- 1 root root ... SystemOut.log
+**Expected result:** `httpd` processes listed — **IHS itself is running fine**.
 
-Step 4 — Trigger the fault
-Step 4.1
+> 📌 The fault is not that IHS is down — it is that IHS is running **without knowledge of WAS**.
 
-Open your browser and log in as customer1 / Customer@123.
-Step 4.2
+---
 
-Navigate to the Account page and attempt a deposit of ₹1,000.
+## Step 5 — Trigger the Fault
 
-👉 Observe what happens in the browser. Note it down.
-Step 4.3
+### Step 5.1 — Test the IHS root URL
 
-On the dsb-dmgr VM, attempt to read the log:
+Open your browser and navigate to:
+
 ```
-tail -20 \
-  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+http://192.168.10.20
 ```
-👉 Observe what happens. Note it down.
-Step 4.
 
-Attempt to grep the log for AccountServlet entries:
+*(IHS root, no path)*
+
+**Observe what happens. Note it down.**
+
+### Step 5.2 — Test the application URL via IHS
+
+Navigate to:
+
 ```
-grep "AccountServlet" \
-  /apps/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log
+http://192.168.10.20/digistack-bank/Home
 ```
-👉 Observe what happens. Note it down.
 
+**Observe what happens. Note it down.**
 
-**⚠️ One important note:** The content contains nested code blocks (```bash inside ```markdown), so **don't paste the outer ```markdown fence** into GitHub. Copy everything *between* the outer fence only — GitHub will render it correctly.
+### Step 5.3 — Confirm WAS is completely unaffected
 
-**Optional addition:** You can add an observations table at the end for recording results:
+Navigate directly to WAS:
 
-```markdown
-## Observations Log
+```
+http://192.168.10.10:9080/digistack-bank/Home
+```
 
-| Step | Observation | Result |
-|------|-------------|--------|
-| 4.2  | Browser behavior on deposit | |
-| 4.3  | tail output | |
-| 4.4  | grep output | |
+**Observe what happens. Note it down.**
+
+---
+
+> ✅ **Fault injection is complete.**
