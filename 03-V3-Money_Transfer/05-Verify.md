@@ -48,7 +48,7 @@ On the **dsb-db** VM, temporarily freeze account 1's account via SQL:
 ```bash
 psql -U digistack_app -d digistack_bank -h 127.0.0.1 \
   -c "UPDATE accounts SET is_frozen = TRUE WHERE user_id = 1;"
-
+```
     ⚠️ This simulates what a real bank does during a fraud investigation — the account still exists, but all money movement is blocked.
 
 ✅ Step 7.5 — Refresh the Dashboard (F5)
@@ -82,18 +82,18 @@ Expected result:
 ✅ Step 7.8 — Confirm Everything in SystemOut.log
 
 On the dsb-app VM:
-
+```
 grep "DashboardServlet" \
   /opt/IBM/WebSphere/AppServer/profiles/devdsbinappserver01/logs/server1/SystemOut.log \
   | tail -5
-
+```
 Expected result — log lines showing account loads and frozen state transitions:
-
+```
 DashboardServlet: Account loaded for userId=1 accountNumber=DSB0000000001 frozen=false
 DashboardServlet: Account loaded for userId=1 accountNumber=DSB0000000001 frozen=true
 DashboardServlet: Account loaded for userId=1 accountNumber=DSB0000000001 frozen=false
-
-    📋 This is the teller's journal proof:
+```
+ 📋 This is the teller's journal proof:
 
         frozen=false → account normal
         frozen=true → we froze it (Step 7.4)
