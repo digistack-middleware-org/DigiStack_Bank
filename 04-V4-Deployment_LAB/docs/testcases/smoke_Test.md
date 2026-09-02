@@ -10,14 +10,14 @@ Smoke test again when:
 
 
 # Smoke Test Checklist – digistack-bank-v3
+
 | # | Check | How | Expected Result |
-|---|-------|-----|-----------------|
+|---|---|---|---|
 | 1 | Admin Console reachable | Browser → port 9060 | Login page loads |
-| 2 | server1 Started | Admin Console → Servers | Green arrow |
-| 3 | digistack-bank-v3 Started | Admin Console → Applications | Green arrow |
-| 4 | Home page loads | Browser → /digistack-bank/Home | Database: Connected green |
-| 5 | Login succeeds | customer1 / Customer@123 | Dashboard renders |
-| 6 | Dashboard account card | Observe after login | SAVINGS + masked number shown |
-| 7 | Deposit works | Account page → deposit ₹500 | Success banner, balance updated |
-| 8 | Withdraw works | Account page → withdraw ₹500 | Success banner, balance unchanged net |
-| 9 | Logout works | Click Logout | Redirected to Home |
+| 2 | server1 Started | Admin Console → Servers | Green arrow ▶ |
+| 3 | digistack-bank-v4 Started | Admin Console → Applications | Green arrow ▶ |
+| 4 | ClassLoader correct | Applications → digistack-bank-v4 → Class loading | PARENT_FIRST + SINGLE |
+| 5 | Home page loads | Browser → `/digistack-bank/Home` | Footer shows v4 label |
+| 6 | Login succeeds | `customer1` / `Customer@123` | Dashboard renders |
+| 7 | Deposit works | Account page → deposit ₹100 | Success banner, balance updated |
+| 8 | Logout works | Click Logout | Redirected to Home |
