@@ -472,7 +472,7 @@
         <p class="mb-0" style="font-size:0.78rem;">
             &copy; 2026 DigiStack Bank. For educational purposes only.
             &nbsp;|&nbsp; WebSphere ND 9.0.5.28
-            &nbsp;|&nbsp; v4 — Application Lifecycle
+            &nbsp;|&nbsp; v5 — WAS Clustering
         </p>
     </div>
 </footer>
