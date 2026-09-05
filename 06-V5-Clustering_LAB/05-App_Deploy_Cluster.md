@@ -2,19 +2,6 @@
 
 ---
 
-## 🎯 What are we doing in this sprint?
-
-The cluster is built and running — but it's an **empty team**. No app is running on it yet!
-
-This sprint's job:
-
-1. Rename the app files to **v5** (tiny label change only).
-2. **Build** the v5 EAR file.
-3. **Deploy it to the CLUSTER** (not to one server!) — this is the big lesson of v5. 🚀
-4. Verify **both members** are serving the app.
-
----
-
 ## 📚 First, Understand the Key Idea
 
 ### 📦 Deploy to the Cluster = "Deploy Once, Run Everywhere"
@@ -185,7 +172,97 @@ proving **"deploy once, run everywhere"** works.
 
 ---
 
-## Step 7 — Re-apply ClassLoader Settings
+# Step 7 — Re-apply ClassLoader Settings
+
+## GUI Method - for Re-apply ClassLoader
+1. In the left navigation panel, go to:
+
+   > **Applications → Application Types → WebSphere enterprise applications**
+
+2. Click **digistack-bank-v5** in the applications list.
+
+3. Under **Detail Properties**, click **Class loading and update detection.
+
+4. On the configuration page, set the following:
+
+   | Setting | Value |
+   |---|---|
+   | Class loader order | `Classes loaded with parent class loader first` *(this is PARENT_FIRST)* |
+   | Class loader delegation | `Application` *(leave as default)* |
+   | WAR class loader policy | `Single class loader for application` *(this is SINGLE)* |
+
+   > **Note:** WAR class loader policy may only be editable if the app contains multiple WAR modules. If it's greyed out, `SINGLE` is already the effective default.
+
+5. Click **OK** or **Apply**.
+
+6. You should see a message:
+
+   ```text
+   The Class loading and update detection changes have been applied...
+   ```
+
+---
+
+## 7.2 Save the Configuration
+
+1. Click **Save** in the **Messages** box at the top of the (or click **Save** in the console taskbar).
+2. On the next screen, confirm by clicking **Save** again.
+3. This is the GUI equivalent of `Configuration saved.` from the script.
+
+---
+
+## 7.3 Synchronize the Configuration to All Nodes
+
+Since the app is deployed on a **cluster**, the config must be pushed to all node agents.
+
+### Option A — GUI sync (per node)
+
+1. Go to:
+
+   > **System administration → Nodes**
+
+2. Select the checkboxes for all nodes hosting the cluster members.
+3. Click **Full Resynchronize**.
+4. Wait until the sync status shows as complete for each node.
+
+### Option B — GUI sync (via node agents)
+
+1. Go to:
+
+   > **System administration → Node agents**
+
+2. Verify all node agents show a green **started** status.
+
+---
+
+## 7.4 Restart the Application / Cluster Members
+
+> ⚠️ The classloader changes **only take effect after restart**.
+
+1. Go to:
+
+   > **Servers → Clusters → WebSphere application server clusters**
+
+2. Check the checkbox next to your cluster (e.g., **digistack-bank-cluster**).
+3. Click **Stop**, and wait until cluster status shows **Stopped** (⏹ icon).
+4. Then click **Start**, and wait until status shows **Started** (▶ green arrow).
+
+---
+
+## 7.5 Verify
+
+1. Go back to:
+
+   > **Applications → Application Types → WebSphere enterprise applications → digistack-bank-v5 → Class loading and update detection**
+
+2. Confirm:
+
+   - [x] Class loader order = **Classes loaded with parent class loader first** ✅
+   - [x] WAR class loader policy = **Single class loader for application** ✅
+
+3. Optionally test the app URL through the web server / cluster to confirm it's serving correctly.
+
+## Wasadmin Method - for Re-apply ClassLoader
 
 ⚠️ **Why?** A fresh install **resets** ClassLoader settings back to defaults.
 Every time we redeploy, we must re-apply the project's settings
