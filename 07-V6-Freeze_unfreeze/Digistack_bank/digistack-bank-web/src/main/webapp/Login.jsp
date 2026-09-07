@@ -12,7 +12,8 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
           rel="stylesheet">
-
+    <link rel="stylesheet" href="css/common/common.css">
+    <link rel="stylesheet" href="css/pages/login.css">
     <style>
         :root {
             --db-navy: #0b2545;

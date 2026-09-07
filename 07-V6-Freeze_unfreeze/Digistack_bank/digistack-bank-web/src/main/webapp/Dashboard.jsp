@@ -13,7 +13,8 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
           rel="stylesheet">
-
+    <link rel="stylesheet" href="css/common/common.css">
+    <link rel="stylesheet" href="css/pages/dashboard.css">
     <style>
         :root {
             --db-navy:      #0b2545;
@@ -531,7 +532,7 @@
                 <div class="section-title">Quick Actions</div>
                 <div class="quick-actions-row mb-4">
 
-                    <a href="Account" class="quick-action-tile">
+                    <a href="Deposit" class="quick-action-tile">
                         <div class="tile-icon"
                              style="background:#e8f4fd;">
                             <i class="bi bi-arrow-down-circle"
@@ -543,7 +544,7 @@
                         </div>
                     </a>
 
-                    <a href="Account" class="quick-action-tile">
+                    <a href="Withdraw" class="quick-action-tile">
                         <div class="tile-icon"
                              style="background:#fff3e0;">
                             <i class="bi bi-arrow-up-circle"
