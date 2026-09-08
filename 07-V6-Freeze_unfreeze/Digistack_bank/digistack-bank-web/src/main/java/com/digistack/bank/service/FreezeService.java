@@ -37,7 +37,19 @@ public class FreezeService {
     private static final String JDBC_USER     = "digistack_app";
     private static final String JDBC_PASSWORD = "Wasadmin@951951";
 
-    private final AccountDao accountDao = new AccountDao();
+    private final AccountDao accountDao;
+
+    public FreezeService() {
+        this.accountDao = new AccountDao();
+    }
+
+    /**
+     * Test constructor — allows a mock AccountDao to be injected.
+     * Added at v6 to satisfy standing rule TEST01.
+     */
+    public FreezeService(AccountDao accountDao) {
+        this.accountDao = accountDao;
+    }
 
     /**
      * Freezes an account identified by its primary key.
@@ -136,7 +148,11 @@ public class FreezeService {
      * Opens a direct JDBC connection to digistack_bank.
      * Replaced at v7 with a JNDI DataSource lookup.
      */
-    private Connection getConnection() throws SQLException {
+    /**
+     * protected so FreezeServiceTest can override with a mock
+     * Connection. Replaced at v7 with a JNDI lookup.
+     */
+    protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
             JDBC_URL, JDBC_USER, JDBC_PASSWORD);
     }

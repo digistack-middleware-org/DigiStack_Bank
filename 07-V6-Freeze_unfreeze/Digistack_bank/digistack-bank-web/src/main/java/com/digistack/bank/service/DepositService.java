@@ -34,7 +34,24 @@ public class DepositService {
     private static final String JDBC_USER     = "digistack_app";
     private static final String JDBC_PASSWORD = "Wasadmin@951951";
 
-    private final AccountDao accountDao = new AccountDao();
+    private final AccountDao accountDao;
+
+    /**
+     * Default constructor — used in production.
+     * Creates a real AccountDao for live database access.
+     */
+    public DepositService() {
+        this.accountDao = new AccountDao();
+    }
+
+    /**
+     * Test constructor — allows a mock AccountDao to be injected.
+     * Used only by DepositServiceTest via Mockito.
+     * Added at v6 to satisfy standing rule TEST01.
+     */
+    public DepositService(AccountDao accountDao) {
+        this.accountDao = accountDao;
+    }
 
     /**
      * Deposits an amount into the user's account.
@@ -137,7 +154,13 @@ public class DepositService {
      * Opens a direct JDBC connection to digistack_bank.
      * Replaced at v7 with a JNDI DataSource lookup.
      */
-    private Connection getConnection() throws SQLException {
+    /**
+     * Opens a direct JDBC connection to digistack_bank.
+     * protected (not private) so DepositServiceTest can override
+     * this method to return a mocked Connection instead of a
+     * real network connection. Replaced at v7 with a JNDI lookup.
+     */
+    protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
             JDBC_URL, JDBC_USER, JDBC_PASSWORD);
     }

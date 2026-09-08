@@ -463,8 +463,12 @@
                 <div class="frozen-banner"
                      style="display:block;">
                     <i class="bi bi-lock-fill me-2"></i>
-                    Your account is frozen — please contact
-                    support to restore access.
+                    Your account is frozen.
+                    <a href="Unfreeze"
+                       style="color:#856404;font-weight:700;">
+                        Unfreeze your account
+                    </a>
+                    to restore access.
                 </div>
                 <% } %>
 
@@ -496,7 +500,12 @@
                                 margin-bottom:16px;font-size:0.82rem;
                                 color:#ffc107;font-weight:600;">
                         <i class="bi bi-lock-fill me-2"></i>
-                        Your account is frozen — please contact support.
+                        Your account is frozen.
+                        <a href="Unfreeze"
+                           style="color:#ffc107;font-weight:700;
+                                  text-decoration:underline;">
+                            Unfreeze
+                        </a>
                     </div>
                     <% } %>
 
