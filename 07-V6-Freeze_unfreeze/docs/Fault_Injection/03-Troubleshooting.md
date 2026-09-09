@@ -1,88 +1,84 @@
-# 🔍 Root Cause Analysis — INC-v5-001
+# Simple Lesson: The Node Agent Fault (INC-v6-001)
+
+## 1. What Happened?
+
+- process stopped: the **Node Agent** on node02.
+- That one stop caused **all six symptoms**.
+- Nothing else broke.
+
+> **Real-life example:** Think of a shop manager (DMgr) who can only talk
+> to the shop (node02) through a phone line (Node Agent). The phone line
+> is dead. The is still open and selling, but the manager cannot
+> call it.
 
 ---
 
-## 💉 What Was Injected
+## 2. What is a Node Agent?
 
-An **outbound firewall rule** was added on the `dsb-node02` VM, dropping all outbound TCP traffic to `192.168.10.30` (`dsb-db`) on port `5432`:
+It does three jobs:
 
-```bash
-iptables -A OUTPUT -d 192.168.10.30 -p tcp --dport 5432 -j DROP
-```
+- **Receives config updates** from DMgr and saves them on the node.
+- **Forwards admin commands** (start/stop server, deploy apps) to the node.
+- **Reports health status** back so the console shows the node as alive.
 
-> This is a **network-layer block applied at the OS level on one specific VM** — it has nothing to do with WAS configuration, the cluster definition, or PostgreSQL itself.
-
----
-
-## 🎯 Why One Member Failed and the Other Did Not
-
-- `server1` on `devdsbinnode02` (`dsb-node02`) is **physically hosted on the VM where the DROP rule was applied**. Every outbound connection attempt from that VM to `192.168.10.30:5432` is **silently discarded by the kernel's netfilter rules** before it ever leaves the VM.
-- `server1` on `devdsbinnode01` (`dsb-dmgr`) is a **completely separate VM with no such rule** — its connections to PostgreSQL succeed normally.
-
-Since the cluster **load-balances incoming requests across both members**, roughly half of all customer sessions were routed to the affected member and experienced DB failures, while the other half — routed to the healthy member — saw no issue at all.
-
-> 🧩 This explains the exact **"it works for me but not my colleague"** pattern in the incident ticket — a classic signature of a **per-member infrastructure fault** in a load-balanced cluster, as opposed to an application-wide fault.
+**It is the only bridge** between DMgr and the node.
+No bridge = no remote control.
 
 ---
 
-## 🤔 Why Every WAS-Level Status Indicator Showed Healthy
+## 3. Why Each Symptom Happened
 
-| Indicator | Why It Looked Fine |
+| Symptom | Simple Reason |
 |---|---|
-| Node Agent running | Federation and cell membership are **independent of database connectivity** |
-| Application "Started" | WAS considers an application started once its **classes load and servlets initialize**. A failed runtime DB call inside `HomeServlet.doGet()` or `AccountServlet.doPost()` is **caught by the existing try/catch blocks** (built in v1 Sprint 3 and v3 Sprint 1) and handled gracefully with an error message — it does not crash the servlet or bring down the application |
-| PostgreSQL healthy | The DB was **completely healthy and reachable from every other host** — checking the DB server directly showed no problem, which could mislead an investigator into ruling the database prematurely |
+| Node shows grey "Unavailable" | DMgr pings the Node Agent. No answer = grey. |
+| Sync fails | Sync pushes files through the Node Agent. No agent = push fails. |
+| JVM change missing on node02 | DMgr saved it, but delivery needs the Node Agent. Never delivered |
+| App still works | App server is a separate process, already running. It doesn't need the Node Agent to serve traffic. |
+| Restart from console fails | Restart command must travel through the Node Agent. No path = error. |
+| wsadmin throws exception | wsadmin talks to live MBeans via the Node Agent. No agent = no connection. |
 
 ---
 
-## 📌 The Exact Evidence That Confirms the Root Cause
+## 4. Why This Fault is Dangerous
 
-On the affected node (`devdsbinnode02`), grepping `SystemOut.log` shows:
+- **Users see nothing wrong.** The app keeps working.
+- **Basic monitoring sees nothing wrong.** HTTP checks return 200.
+- But the node is **administratively dark**:
+  - Can't push config.
+  - Can't restart the server remotely.
+  - If the app crashes, you **cannot bring it back from the console**.
 
-```
-HomeServlet: DB read FAILED — Connection to 192.168.10.30:5432 refused. Check that the hostname and port are correct...
-```
-
-or, more specifically for a silently-dropped (not refused) connection:
-
-```
-HomeServlet: DB read FAILED — java.net.SocketTimeoutException: connect timed out
-```
-
-### 🔑 Diagnostic Distinction: REFUSED vs TIMEOUT
-
-| Log Symptom | Meaning | Typical Cause |
-|---|---|---|
-| `Connection refused` | Remote host **actively rejected** the connection | PostgreSQL not listening, or a firewall on the **DB side** returning a REJECT |
-| `connect timed out` | Packets **silently dropped in transit** | An outbound **DROP** iptables rule (as opposed to a REJECT rule) |
-
-> This distinction alone should point an experienced admin toward a **network-path problem** rather than a PostgreSQL configuration problem.
+> **Real-life example:** The shop is open, but the manager can't call it.
+> If the shop suddenly closes, no one can tell the staff to reopen.
 
 ---
 
-## 🛠️ Confirming Network-Level Diagnosis (Fastest Path to RCA)
+## 5. How to Investigate (If You Didn Know the Answer)
 
-### 1 — From `dsb-node02` itself:
-
+### Step 1 — Is the Node Agent running?
 ```bash
-telnet 192.168.10.30 5432
-# or
-nc -zv 192.168.10. 5432
+ps -ef | grepagent
 ```
+- No process found = root cause found. (10 seconds!)
 
-> ⏳ This **hangs indefinitely (DROP)** rather than immediately refusing (REJECT) — a telltale sign.
-
-### 2 — From `dsb-dmgr` (the unaffected node):
-
-The same command **connects successfully instantly** — proving the database and network path are fine everywhere except from the one affected host.
-
-### 3 — Inspect the firewall (the smoking gun 🚬):
-
+### Step 2 — Why did it stop?
 ```bash
-iptables -L OUTPUT -n | grep 192.168.10.30
+tail -100 /apps/IBM/WebSphere/AppServer/profiles/<node02-profile>/logs/nodeagent/SystemOut.log
 ```
+- `ADMU3201I stopping` = clean manual stop.
+- `ADMU0111E` or OOM errors = crash, different problem.
 
-> On `dsb-node02` this directly reveals the injected **DROP rule**.
+### Step 3 — Is the app server still alive?
+```bash
+ps -ef | grep server1
+```
+- Yes = proves app server and Node Agent are separate.
+
+### Step 4 — Is traffic still flowing?
+```bash
+curl -o /dev/null -s -w "%{http_code}" http://192.168.10.20/digistack-bank/Home
+```
+- 200 = users unaffected.
 
 ---
 

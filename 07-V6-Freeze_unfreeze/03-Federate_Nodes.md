@@ -1,170 +1,65 @@
-digistack-bank/
-│
-├── pom.xml
-│
-├── .gitignore
-│
-│
-├── database/
-│   ├── migrations/
-│   │   ├── V1__initial_schema.sql
-│   │   ├── V2__create_users.sql
-│   │   ├── V3__create_accounts.sql
-│   │   ├── V4__create_transactions.sql
-│   │   └── ...
-│   │
-│   ├── seeds/
-│   │   ├── seed_users.sql
-│   │   ├── seed_accounts.sql
-│   │   └── seed_transactions.sql
-│   │
-│   └── scripts/
-│       ├── backup.sql
-│       └── health_check.sql
-│
-├── digistack-bank-web/
-│   │
-│   ├── pom.xml
-│   │
-│   └── src/
-│       │
-│       ├── main/
-│       │   │
-│       │   ├── java/
-│       │   │   │
-│       │   │   └── com/
-│       │   │       └── digistack/
-│       │   │           └── bank/
-│       │   │
-│       │   │               ├── config/
-│       │   │               │   ├── DatabaseConfig.java
-│       │   │               │   └── AppConfig.java
-│       │   │               │
-│       │   │               ├── controller/
-│       │   │               │   ├── HomeServlet.java
-│       │   │               │   ├── LoginServlet.java
-│       │   │               │   ├── LogoutServlet.java
-│       │   │               │   │
-│       │   │               │   ├── dashboard/
-│       │   │               │   │   ├── DashboardServlet.java
-│       │   │               │   │   └── BalanceJsonServlet.java
-│       │   │               │   │
-│       │   │               │   ├── account/
-│       │   │               │   │   ├── AccountServlet.java
-│       │   │               │   │   ├── AccountListServlet.java
-│       │   │               │   │   └── AccountDetailsServlet.java
-│       │   │               │   │
-│       │   │               │   ├── customer/
-│       │   │               │   │   ├── CustomerServlet.java
-│       │   │               │   │   ├── CustomerListServlet.java
-│       │   │               │   │   └── CustomerDetailsServlet.java
-│       │   │               │   │
-│       │   │               │   └── transfer/
-│       │   │               │       ├── TransferServlet.java
-│       │   │               │       └── TransactionServlet.java
-│       │   │               │
-│       │   │               ├── service/
-│       │   │               │   ├── AuthService.java
-│       │   │               │   ├── CustomerService.java
-│       │   │               │   ├── AccountService.java
-│       │   │               │   ├── TransferService.java
-│       │   │               │   └── TransactionService.java
-│       │   │               │
-│       │   │               ├── dao/
-│       │   │               │   ├── UserDao.java
-│       │   │               │   ├── CustomerDao.java
-│       │   │               │   ├── AccountDao.java
-│       │   │               │   ├── TransferDao.java
-│       │   │               │   └── TransactionDao.java
-│       │   │               │
-│       │   │               ├── model/
-│       │   │               │   ├── User.java
-│       │   │               │   ├── Customer.java
-│       │   │               │   ├── Account.java
-│       │   │               │   ├── Transaction.java
-│       │   │               │   └── Transfer.java
-│       │   │               │
-│       │   │               ├── dto/
-│       │   │               │   ├── LoginRequest.java
-│       │   │               │   ├── AccountResponse.java
-│       │   │               │   ├── TransferRequest.java
-│       │   │               │   └── TransactionResponse.java
-│       │   │               │
-│       │   │               ├── exception/
-│       │   │               │   ├── InsufficientFundsException.java
-│       │   │               │   ├── AccountNotFoundException.java
-│       │   │               │   ├── CustomerNotFoundException.java
-│       │   │               │   ├── TransferException.java
-│       │   │               │   └── ValidationException.java
-│       │   │               │
-│       │   │               ├── security/
-│       │   │               │   ├── PasswordUtil.java
-│       │   │               │   ├── AuthenticationUtil.java
-│       │   │               │   └── AuthorizationUtil.java
-│       │   │               │
-│       │   │               ├── util/
-│       │   │               │   ├── SeedUsers.java
-│       │   │               │   ├── JsonUtil.java
-│       │   │               │   ├── DateUtil.java
-│       │   │               │   └── MoneyUtil.java
-│       │   │               │
-│       │   │               └── constant/
-│       │   │                   ├── AccountType.java
-│       │   │                   ├── TransactionType.java
-│       │   │                   ├── TransactionStatus.java
-│       │   │                   └── UserRole.java
-│       │   │
-│       │   ├── resources/
-│       │   │   ├── application.properties
-│       │   │   └── messages.properties
-│       │   │
-│       │   └── webapp/
-│       │       │
-│       │       ├── index.jsp
-│       │       │
-│       │       ├── WEB-INF/
-│       │       │   ├── web.xml
-│       │       │   └── views/
-│       │       │       ├── home/
-│       │       │       │   └── Home.jsp
-│       │       │       │
-│       │       │       ├── auth/
-│       │       │       │   └── Login.jsp
-│       │       │       │
-│       │       │       ├── dashboard/
-│       │       │       │   └── Dashboard.jsp
-│       │       │       │
-│       │       │       ├── account/
-│       │       │       │   ├── Account.jsp
-│       │       │       │   ├── AccountList.jsp
-│       │       │       │   └── AccountDetails.jsp
-│       │       │       │
-│       │       │       ├── customer/
-│       │       │       │   ├── CustomerList.jsp
-│       │       │       │   └── CustomerDetails.jsp
-│       │       │       │
-│       │       │       └── transfer/
-│       │       │           ├── Transfer.jsp
-│       │       │           └── TransactionHistory.jsp
-│       │       │
-│       │       ├── css/
-│       │       │   ├── common.css
-│       │       │   ├── login.css
-│       │       │   ├── dashboard.css
-│       │       │   └── banking.css
-│       │       │
-│       │       ├── js/
-│       │       │   ├── common.js
-│       │       │   ├── dashboard.js
-│       │       │   ├── account.js
-│       │       │   └── transfer.js
-│       │       │
-│       │       └── images/
-│       │
-│       └── test/
-│           └── java/
-│               └── com/digistack/bank/
-│                   ├── service/
-│                   ├── dao/
-│                   └── util/
-│
+# Freeze/Unfreeze Explained in Simple English
+
+## 1. What is Freeze/Unfreeze?
+
+Think of your bank card.
+
+- **Freeze** = you lock the card. Nobody can take money out or put money in.
+- **Unfreeze** = you unlock it. Everything works again.
+
+Banks do this in real life. Lost your card? You freeze it in the app. Found it? You unfreeze it.
+
+---
+
+## 2. Why do we need it?
+
+- Protect money if an account is risky.
+- Stop fraud quickly.
+- Customer can pause their own account.
+
+**Rule:** A frozen account must **reject** deposits and withdrawals.
+
+---
+
+## 3. Where is the Freeze code?
+
+Good news: it was already written. We just need to **test it now**.
+
+| Part | Where it lives |
+|---|---|
+| Freeze logic | `FreezeService.java` |
+| Database freeze | `AccountDao.freeze()` / `unfreeze()` |
+| Buttons on screen | `Freeze.jsp` / `Unfreeze.jsp` |
+| Blocking deposits | `DepositService` checks `isFrozen()` |
+| Blocking withdrawals | `WithdrawService` checks `isFrozen()` |
+
+The database has a column called `is_frozen`.
+
+- `is_frozen = false` → account works
+- `is_frozen = true` → account is locked
+
+---
+
+## 4. Big idea: Never trust the screen alone
+
+This is called **defense in depth**. Example:
+
+- The website **greys out** the Deposit button when frozen.
+- But a clever user can press F12 in the browser and enable the button anyway. Or use a tool like `curl` to send a request directly.
+
+So the check must exist in **two places**:
+
+1. **UI check** — hides and disables buttons (friendly, for normal users).
+2. **Server check** — the backend refuses the money move even if someone bypasses the UI (real protection).
+
+Real-life example: A shop door says "Closed" (UI), but the door is also **locked** (server). The sign alone doesn't stop anyone.
+
+---
+
+# All the Code will already Developed dont worry
+
+## 10. One-line summary
+
+> Sprint 3 is not about writing new code — it's about **proving** that freezing an account really blocks money movement, at the screen level AND at the server level, and that unfreezing brings the account back to life.
+
+When all checks pass, say **"continue sprint"** to move to Sprint 4.
