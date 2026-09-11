@@ -1,249 +1,168 @@
-# JDBC Provider for PostgreSQL
+# What we Achieve From these Version-4.5
+## Introducing Websphere IHS
+
+  ## Request Flow
+
+<img src="images/V5-Request_flow.png" width="800">
+
+
+   ## VM Request Flow
+
+<img src="images/V5-VM_Request_flow.PNG" width="800">
+
+# What is IBM HTTP Server (IHS)? (Simple idea)
+
+IHS is a **web server** made by IBM. It is basically a smarter version of **Apache** (a very famous free web server).
+
+**Its job:** it sits in front of your **WebSphere (WAS)** server and takes requests from users first.
+
 ---
 
-## 1. The Problem (How it was before)
+## The Postman Analogy 📮
 
-Before v7, your Java code looked like this:
+Imagine your users sending letters:
+
+| Part | Role |
+|---|---|
+| **Browser** | The person writing the letter (request) |
+| **IHS** | The front desk / receptionist who receives the letter |
+| **WAS AppServer** | The back office that actually does the work |
+
+> The browser **never goes directly** to the back office. Everything goes through the front desk.
+
+---
+
+## How It Works — Step by Step
+
+1. User opens a page in the browser → request goes to **IHS**
+2. Inside IHS there's a helper called the **WAS plugin**
+3. The plugin checks: *"Which WAS server should handle this URL?"*
+4. It forwards the request to the correct **WAS server**
+
+---
+
+## Why This Is Useful
+
+If WAS needs to be shut down for maintenance:
+
+- ❌ **Without IHS** → users see an ugly error: `connection refused`
+- ✅ **With IHS** → the front desk a nice *"We're under maintenance"* page
+
+The user experience stays smooth.
+
+---
+
+## Why Two Separate VMs?
+
+| VM | IP Address | What Runs on It |
+|---|---|---|
+| **dsb-dmgr | 192.168.10.10 | WebSphere ND (the app server side) |
+| **dsb-ihs** | 192.168.10.20 | IBM HTTP Server (the web front door) |
+
+**Key rule:** IHS and WAS live on **different machines** — never the same one. They to each other over the network (the plugin sends requests from IHS to WAS).
+
+> This matches how real companies do it — the web server often sits in a **DMZ** (a protected network zone facing the internet), separate from the app servers.
+
+---
+
+## RAM Note (Your Computer)
+
+From now on, you'll often run **3 VMs at the same time**:
+
+| VM | RAM |
+|---|---|
+| dsb-dmgr | 3 GB |
+| dsb-ihs | 1 GB |
+| dsb-db | 2 GB |
+| **Total** | **6 GB RAM + 5 vCPU** |
+
+Your host computer can handle this (per **SOE01 §1a**), so no worries — just don't add extra VMs on top.
+
+# Request Flow — Browser → IHS → WAS → DB
+
+## The Big Picture
+
+When a customer opens the DigiStack Bank website, the request travels through **4 stops** before coming back with an answer:
 
 ```
-DriverManager.getConnection(
-    "jdbc:postgresql://192.168.10.30:5432/digistack_bank",
-    "digistack_app",
-    "Wasadmin@951951");
+┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐
+│ Browser │ ───► │   IHS   │ ───► │   WAS   │ ───► │   DB    │
+│ Windows │ :80  │  .10.20 │ :9080│  .10.10 │      │  .10.30 │
+└─────────┘ ◄─── └─────────┘ ◄─── └─────────┘ ◄─── └─────────┘
 ```
 
-Three big problems:
-
-- **Hardcoded URL** → If the database moves to a new IP, you must **change code and redeploy** the whole application.
-- **Hardcoded password** → The password sits in the source code AND inside the compiled `.class` in the EAR. Anyone who opens the EAR file can read it.
-- **No connection pooling** → Every single request:
-  - Opens a new TCP connection to PostgreSQL
-  - Does the handshake and login
-  - Uses it once
-  - Closes it
-
-**Real-life example:** Imagine hiring a new taxi driver, signing his contract, and firing him — for every single trip. Expensive and slow. Pooling keeps drivers (connections) ready and reuses them.
+> The request goes **forward** through all 4 stages, and the response comes **back** the same path in reverse.
 
 ---
 
-## 2. The Solution: JDBC Provider + DataSource (Two Layers)
+## Stage-by-Stage Walkthrough
 
-WAS fixes this in **two steps** (two sprints):
+### Stage 1 — Browser (the customer)
 
-| Layer | Sprint | What it does | Simple meaning |
-|---|---|---|---|
-| **JDBC Provider** | Sprint 1 (this one) Tells WAS **which driver to use and where the JAR is** | "WAS, here is the PostgreSQL driver software" |
-| **DataSource + JAAS Alias** | Sprint 2 | A **named, pooled** connection in JNDI | "W, here is how to connect, with what password, keeping N connections ready" |
+1. Customer types `http://192.168.10.20/digistack-bank/Home`
+2. The browser sends an **HTTP GET request** over the network
+3. Target: port **80** on the IHS VM (192.168.10.20)
 
-**Real-life example:**
-- JDBC Provider = installing the printer driver on your laptop
-- DataSource = the printer shortcut you click to actually print
+> 📌 The browser knows **nothing** about WAS or the database. It only knows the web address.
 
-You **cannot** create a DataSource without a Provider. Provider comes first. That's why this is Sprint 1.
+### Stage 2 — IHS receives the request (the front desk)
 
----
+1. IHS receives the request on **port 80**
+2. The **WAS plugin** (a module loaded inside IHS) reads its routing table: `plugin-cfg.xml`
+3. The plugin checks: *"Does `/digistack-bank/*` belong to a WAS application?"*
+4. **Yes** → forward the request to WAS at `192.168.10.10:9080`
 
-## 3. What is a JDBC Driver?
+> 📌 If the URL did **not** match (e.g., a static image), IHS would serve it itself. Here it matches, so it forwards.
 
-- A **JAR file** (like `postgresql-42.x.x.jar`) that contains code.
-- This code knows **how to talk to PostgreSQL** — its language, its protocol.
-- Without the driver, WAS has no idea how to speak to PostgreSQL.
+### Stage 3 — WAS processes the request (the back office)
 
-**Real-life example:** The driver is like a translator between Java and PostgreSQL. WAS speaks Java. PostgreSQL speaks its own protocol. The driver translates.
+1. WAS receives the request on **port 9080**
+2. The plugin routing matched `/digistack-bank/Home` → **HomeServlet** runs
+3. The servlet needs data (e.g., bank name from `app_config` table)
 
-** job in Sprint 1:** Tell WAS:
-1. "Use the PostgreSQL driver" and
-2. "The JAR is at this path" (on **both nodes**)
+### Stage 4 — Database (the filing cabinet)
 
----
+1. WAS connects to **PostgreSQL** on dsb-db (192.168.10.30)
+2. Runs a query, e.g.: `SELECT * FROM app_config`
+3. PostgreSQL returns the data to WAS
 
-## 4. What is JNDI? (Quick intro — full use comes in Sprint 2)
+### The Return Journey
 
-- **JNDI = Java Naming and Directory Interface**
-- It's a **phone book / registry** inside WAS.
-- Your code looks up objects **by name** instead of building them.
-
-**Old way:** "Connect to this IP with this password."
-**JNDI way:** "Look up `jdbc/BankDS` and give me a pooled connection."
-
-- WAS keeps the registry.
-- Your application code **never sees the credentials**.
-- Passwords change? Update it in WAS admin — **no code change, no redeploy**.
+1. WAS builds the **HTML page** and sends it back to IHS (port 9080 → IHS)
+2. IHS passes the page back to the browser (port 80 → browser)
+3. Browser renders the page — customer sees the Home page with **Database: Connected** ✅
 
 ---
 
-## 5. Scope: Cell vs Node Server
+## Evidence at Each Stage (How to Prove Each Hop)
 
-WAS ND has a hierarchy:
-
-```
-Cell (devdsbincell01)          <- the whole managed group
- |-- Node (devdsbinnode01)     <- one host
- |-- Node (devdsbinnode02)     <- another host
- |      `-- Server (your app server)  <- one JVM
-```
-
-| Scope | Applies to | When to use |
-||---||
-| **Cell** | Every node + every server in the cell | Shared infrastructure — **always right for clusters** |
-| **Node** | One node only | Rare cases, node-specific stuff |
-| **Server** | One server only | Almost never for JDBC |
-
-**Why Cell scope?- Create it **once**, both nodes **inherit it automatically**.
-- Node scope = create and maintain it **twice** (once per node).
-- Double maintenance = double chance of mistakes.
-
-**Real-life example:** Cell scope is like posting one company-wide memo. Node scope is like emailing the same memo separately to each office — someone will get a different version.
-
-**Rule to remember:** *Shared across the cluster? Use Cell scope.*
-
----
-# Transactions — Explained Simply
-
-*(By Ox Alpha)*
-
-## 1. What Is a Transaction?
-
-- A **transaction = a unit of work**.
-- One rule: **all of it happens, or none of it happens.**
-- No half-done states allowed.
-
-**Real-life example:**
-- ATM transfer of $50 to a friend:
-  - Step 1: money leaves your account.
-  - Step 2: money enters theirs.
-- If the machine crashes between steps → your money must **not vanish**.
-- Bank promise: **both steps or nothing.**
+| Stage | Log / Proof | Command |
+|---|---|---|
+| 1 → 2: Request hit IHS | IHS `access_log` shows `GET /digistack-bank/Home 200` | `tail /opt/IBM/HTTPServer/logs/access_log` |
+| 2: Plugin routing decision | Plugin log shows URI match + routing | `tail /opt/IBM/WebSphere/Plugins/logs/webserver1/http_plugin.log` |
+| 3: WAS processed it | `SystemOut.log` shows `HomeServlet: DB read successful` | `grep HomeServlet .../SystemOut.log` |
+| 4: DB answered | Green **Database: Connected** banner on the page | Visual check |
 
 ---
 
-## 2. The Bank Withdrawal Pattern (2 Steps)
+## Simple Analogy — The Restaurant 🍽️
 
-1. **Check** the balance (enough money?).
-2. **Deduct** the balance.
+1. **Browser** = customer walks in and orders from the waiter
+2. **IHS** = the **waiter** — takes the order to the kitchen, never lets the customer into the kitchen
+3. **WAS plugin** = the waiter's **order slip** telling him which kitchen to send it to
+4. **WAS** = the **kitchen** — actually prepares the food
+5. **DB** = the **pantry/storeroom** — where the ingredients come from
+6. The food comes back: kitchen → waiter → customer
 
-- If step 2 fails after step 1 passed → balance must stay **unchanged**.
-- This is **"rollback" — undo everything**.
-
-**Real-life example:**
-- Vending machine eats your coin but no snack drops → machine must give the coin back.
-
----
-
-## 3. What Is autoCommit?
-
-- Your app gets a pooled connection from `jdbc/BankDS`.
-- WAS gives it with **autoCommit = true**.
-- Meaning:
-  - **Every SQL statement = its own tiny transaction.**
-  - Success → **committed instantly**.
-  - Failure → **rolled back instantly**.
-- You write **no commit/rollback code**. It's automatic.
-
-**Real-life example:**
-- Vending machine: press one button → one snack drops. Each press is complete on its own. No "half a snack" possible.
+The customer never sees the kitchen or pantry — they only see the waiter. That's the **transparent reverse proxy** pattern.
 
 ---
 
-## 4. Why autoCommit=true Is Safe in v7 (Current Version)
+## Key Rules to Remember
 
-Every operation does **exactly**:
+- The browser **only ever talks to IHS** (port 80) — never directly to WAS
+- `plugin-cfg.xml` is **generated by WAS**, **consumed by IHS**
+- If IHS is down → port 80 dead, but WAS still works directly on 9080
+- If WAS is down → IHS can still serve a **maintenance page** instead of an error
+- From **v8 onward**, port 9080 is firewalled — IHS becomes the **only** way in
 
-| Operation | Touches |
-|-----------|---------|
-| Deposit | 1 row in `accounts` |
-| Withdraw | 1 row in `accounts` |
-| Freeze | 1 row in `accounts` |
-| Unfreeze | 1 row in `accounts` |
-
-- **One statement + one row + one DataSource.**
-- PostgreSQL guarantees: a **single statement is atomic by itself**.
-- So: 1 statement + autoCommit = **1 complete transaction**.
-- **Result: v7 is safe with zero extra code.**
-
-### Rollback Proof (Sprint 5 test)
-- Deliberately try an over-limit Withdraw.
-- Exception thrown **before** the SQL ran.
-- SELECT before and after → balance **unchanged**. ✅
-
----
-
-## 5. When autoCommit STOPS Being Enough
-
-### P02 v15 — Fund Transfer
-- One user action touches **TWO accounts**:
-  1. Debit the source.
-  2. Credit the destination.
-- With autoCommit=true, each statement commits **separately**.
-- **Danger:**
-  - Debit succeeds, credit fails → money **disappears**.
-  - Credit succeeds, debit fails → money **created from nothing**. 😱
-
-### The Fix: Explicit Transaction Boundaries
-
-```java
-conn.setAutoCommit(false);   // take manual control
-// ... do BOTH updates ...
-conn.commit();               // both succeed → save both
-conn.rollback();             // anything fails → undo both
-```
-
-**Real-life example:**
-- Paying at a shop by card: the **charge** and the **receipt** must both happen.
-- If only the charge happens → you paid and got nothing.
-
----
-
-## 6.03 — Two Databases (PostgreSQL + Oracle)
-
-- Core Banking Migration writes to:
-  - PostgreSQL (legacy system)
-  - Oracle 21c XE (new CBS)
-- **Two DataSources = distributed transaction territory.**
-
----
-
-## 7. What Is 2PC / XA?
-
-- **2PC = Two-Phase Commit.**
-- **XA = the Java/JTA interface for it.**
-
-How it works:
-1. A **coordinator** asks all databases: "PREPARE — can you commit?"
-2. If **all say yes** → coordinator says: "COMMIT — all at once."
-3. If **anyone says no** → everyone aborts.
-
-**Real-life example:**
-- A wedding: coordinator asks both bride and groom "Do you?" — only if **both say yes** does anyone get "married."
-
-### Why P03 AVOIDS 2PC:
-1. Not all DataSources support XA.
-2. Locks are held across **network round-trips** → latency risk.
-3. Coordinator crash mid-commit → everyone **stuck waiting** (blocking).
-4. Better option exists: **Saga pattern**.
-
----
-
-## 8. The Saga Pattern (The Chosen Way)
-
-- Instead of one big transaction → a **chain of small local transactions**.
-- Each step has:
-  - **Idempotency key** → safe to retry, never applies twice.
-  - **Compensating transaction** → an "undo" step if a later step fails.
-
-**Real-life example:**
-- Booking a flight + hotel:
-  - Book flight ✅ → hotel fails ❌ → **cancel the flight** (compensation).
-  - You never end up with a flight and no hotel, unpaid.
-
----
-
-## 9. Key Rules to Remember
-
-- ✅ v7: one statement, one row, one DataSource → **autoCommit=true is enough**.
-- ⚠️ v15 (Transfer): two rows in one action → **need setAutoCommit(false) + commit/rollback**.
-- 🚫 P03 (two databases): **skip 2PC**, use **Saga + compensating transactions**.
-- 📌 This traceability note is the **anchor** for all future transaction decisions.
-
-**One-line summary:**
-> *Small work = auto commit. Big work = manual commit. Cross-system work = Saga, not 2PC.*
