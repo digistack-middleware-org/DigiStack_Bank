@@ -1,11 +1,42 @@
 /*
- * home.css — DigiStack Bank P01 v6
- * Styles specific to Home.jsp (public landing page).
+ * home.css — DigiStack Bank P01 v8 (updated)
+ *
+ * All styles specific to Home.jsp.
+ * v8 update: all inline style="" attributes extracted to classes.
+ *
+ * New classes added in this update:
+ *   .icon-gold            — replaces style="color:var(--db-gold);"
+ *   .icon-brand           — replaces style="font-size:1.6rem;"
+ *   .nav-link-disabled    — replaces style="opacity:0.5;cursor:not-allowed;"
+ *   .btn-coming-soon      — replaces disabled button inline styles
+ *   .icon-hero-graphic    — replaces hero illustration inline styles
+ *   .feature-card-delay-1 through -4 — replaces animation-delay styles
+ *   .feature-link-active  — replaces inline style on the active feature link
+ *   .footer-sub           — replaces footer small text inline style
+ *   .ihs-banner-logo      — replaces img inline style in IHS banner
  */
 
-/* Override brand text size — Home uses larger branding */
+/* ── Utility: gold icon colour ── */
+.icon-gold { color: var(--db-gold); }
+
+/* ── Brand icon in navbar ── */
+.icon-brand { font-size: 1.6rem; }
+
+/* ── Override brand text size on Home (larger than other pages) ── */
 .navbar-brand-text { font-size: 1.5rem; }
 
+/* ── IHS banner logo sizing ── */
+.ihs-banner-logo {
+    height: 22px;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+/* ── Navbar nav link disabled state ── */
+.nav-link-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 .dsb-navbar .nav-link {
     color: rgba(255,255,255,0.85) !important;
     font-weight: 500;
@@ -13,6 +44,15 @@
 }
 .dsb-navbar .nav-link:hover { color: var(--db-gold) !important; }
 
+/* ── Coming soon button (navbar) ── */
+.btn-coming-soon {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: rgba(255,255,255,0.6);
+    border-color: rgba(255,255,255,0.2);
+}
+
+/* ── Navbar login button ── */
 .btn-login-nav {
     background-color: var(--db-gold);
     color: var(--db-navy);
@@ -27,7 +67,7 @@
     transform: translateY(-1px);
 }
 
-/* ── Hero ── */
+/* ── Hero section ── */
 .hero-section {
     background: linear-gradient(135deg, var(--db-navy) 0%, #1a3a6b 100%);
     color: white;
@@ -101,6 +141,12 @@
     animation: fadeInDown 0.8s ease-out both;
 }
 
+/* ── Hero graphic icon ── */
+.icon-hero-graphic {
+    font-size: 10rem;
+    color: rgba(201,162,39,0.25);
+}
+
 /* ── DB Status Bar ── */
 .db-status-bar {
     background-color: rgba(255,255,255,0.07);
@@ -125,7 +171,17 @@
     animation: pulse 1.5s infinite;
 }
 
-/* ── Features ── */
+/* ── Stats section ── */
+.stats-section {
+    background-color: var(--db-navy);
+    padding: 50px 0;
+    color: white;
+}
+.stat-item    { text-align: center; }
+.stat-number  { font-size: 2.5rem; font-weight: 800; color: var(--db-gold); line-height: 1; }
+.stat-label   { font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-top: 6px; }
+
+/* ── Features section ── */
 .features-section {
     padding: 80px 0;
     background-color: var(--db-light-bg);
@@ -156,6 +212,13 @@
     transform: translateY(-6px);
     box-shadow: 0 12px 32px rgba(11,37,69,0.12);
 }
+
+/* ── Feature card animation delays ── */
+.feature-card-delay-1 { animation-delay: 0.1s; }
+.feature-card-delay-2 { animation-delay: 0.2s; }
+.feature-card-delay-3 { animation-delay: 0.3s; }
+.feature-card-delay-4 { animation-delay: 0.4s; }
+
 .feature-icon {
     width: 70px; height: 70px;
     background: linear-gradient(135deg, var(--db-navy), #1a3a6b);
@@ -168,6 +231,8 @@
 .feature-icon i { font-size: 1.8rem; color: var(--db-gold); }
 .feature-card h5 { font-weight: 700; color: var(--db-navy); margin-bottom: 0.6rem; }
 .feature-card p  { color: #666; font-size: 0.92rem; line-height: 1.6; }
+
+/* ── Feature link states ── */
 .feature-link {
     color: var(--db-navy);
     font-weight: 600;
@@ -176,16 +241,13 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
-
-/* ── Stats ── */
-.stats-section {
-    background-color: var(--db-navy);
-    padding: 50px 0;
-    color: white;
+/* Active feature link — replaces inline style="opacity:1;cursor:pointer;..." */
+.feature-link-active {
+    opacity: 1;
+    cursor: pointer;
+    text-decoration: underline;
 }
-.stat-item    { text-align: center; }
-.stat-number  { font-size: 2.5rem; font-weight: 800; color: var(--db-gold); line-height: 1; }
-.stat-label   { font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-top: 6px; }
 
-/* ── Footer override (Home has more padding) ── */
+/* ── Footer override (Home uses more padding) ── */
 .dsb-footer { padding: 30px 0; font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+.footer-sub { font-size: 0.78rem; }

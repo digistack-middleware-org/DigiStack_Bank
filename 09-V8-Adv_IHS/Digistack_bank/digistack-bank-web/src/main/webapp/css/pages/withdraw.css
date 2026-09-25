@@ -1,9 +1,33 @@
 /*
- * withdraw.css — DigiStack Bank P01 v6
- * Styles specific to Withdraw.jsp.
- * Same shape as deposit.css — only the action button differs.
+ * withdraw.css — DigiStack Bank P01 v8 (updated)
+ *
+ * v8 update: all inline style="" attributes extracted to classes.
+ *
+ * Same structure as deposit.css — only the action button colour
+ * and the title icon colour differ between the two pages.
+ *
+ * Classes shared with other pages come from common.css:
+ *   .navbar-user-label, .alert-icon, .icon-gold, .icon-navy,
+ *   .account-summary-card and all its children,
+ *   .frozen-chip, .alert-success-custom, .alert-error-custom,
+ *   .back-link, .page-header, .breadcrumb-nav, .dsb-footer
+ *
+ * New classes specific to this page:
+ *   .acct-holder-name       — holder name inside summary card
+ *   .icon-withdraw-title    — red colour on form card icon
+ *   .frozen-form-notice     — amber warning box when frozen
+ *   .frozen-form-link       — Unfreeze link inside frozen notice
+ *   .btn-withdraw           — red gradient submit button
  */
 
+/* ── Account holder name in summary card ── */
+.acct-holder-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* ── Form Card ── */
 .form-card {
     background: white;
     border-radius: 16px;
@@ -21,6 +45,32 @@
     align-items: center;
     gap: 8px;
 }
+
+/* ── Withdraw title icon colour ── */
+/* replaces style="color:#dc3545;" on the form card icon */
+.icon-withdraw-title { color: #dc3545; }
+
+/* ── Frozen form notice ── */
+/* replaces large inline style block on frozen warning div */
+.frozen-form-notice {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #856404;
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+}
+
+/* ── Unfreeze link inside frozen notice ── */
+/* replaces style="color:#856404;font-weight:700;" */
+.frozen-form-link {
+    color: #856404;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* ── Form fields ── */
 .form-label {
     font-weight: 600;
     font-size: 0.85rem;
@@ -48,7 +98,14 @@
     font-weight: 600;
 }
 .input-prefix + .form-control { border-radius: 0 10px 10px 0; }
-.quick-amounts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+/* ── Quick Amount Buttons ── */
+.quick-amounts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
 .btn-quick-amount {
     background: var(--db-light-bg);
     border: 1.5px solid #dde3ed;
@@ -60,9 +117,13 @@
     cursor: pointer;
     transition: background-color 0.15s, border-color 0.15s;
 }
-.btn-quick-amount:hover { background: #e2e8f4; border-color: var(--db-navy); }
+.btn-quick-amount:hover {
+    background: #e2e8f4;
+    border-color: var(--db-navy);
+}
 
-/* ── Withdraw Button — red gradient ── */
+/* ── Withdraw Submit Button — red gradient ── */
+/* This is the only visual difference from deposit.css */
 .btn-withdraw {
     background: linear-gradient(135deg, #6b1a1a, #dc3545);
     color: white;
@@ -74,4 +135,13 @@
     transition: opacity 0.2s, transform 0.15s;
     width: 100%;
 }
-.btn-withdraw:hover { opacity: 0.9; transform: translateY(-1px); color: white; }
+.btn-withdraw:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: white;
+}
+.btn-withdraw[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}

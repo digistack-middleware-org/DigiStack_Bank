@@ -255,6 +255,26 @@ body {
     margin-bottom: 20px;
 }
 
+/* ── Icon colour utilities (used across all pages) ──────────────── */
+/* These replace repeated style="color:..." inline attributes        */
+.icon-gold  { color: var(--db-gold); }
+.icon-navy  { color: var(--db-navy); }
+.icon-green { color: #28a745; }
+
+/* ── Navbar username label (Account/Deposit/Withdraw/Freeze pages) ── */
+/* replaces style="color:rgba(255,255,255,0.75);font-size:0.88rem;"   */
+.navbar-user-label {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.88rem;
+}
+
+/* ── Alert banner icon sizing (used in all alert-*-custom banners) ── */
+/* replaces style="font-size:1.2rem;flex-shrink:0;"                   */
+.alert-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
 /* ── Footer ──────────────────────────────────────────────────────── */
 .dsb-footer {
     background-color: #0a1f3d;

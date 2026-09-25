@@ -1,12 +1,39 @@
 /*
- * login.css — DigiStack Bank P01 v6
- * Styles specific to Login.jsp.
+ * login.css — DigiStack Bank P01 v8 (updated)
+ *
+ * All styles specific to Login.jsp.
+ * v8 update: all inline style="" attributes extracted to classes.
+ *
+ * New classes added in this update:
+ *   .icon-gold          — gold colour on navbar bank icon
+ *   .icon-nav-brand     — font-size for navbar icon
+ *   .secure-login-label — replaces inline styled span in navbar
+ *   .ihs-banner-logo    — IHS banner image sizing
+ *   .open-account-disabled — replaces inline styled span
+ *   .icon-green         — green colour on shield icon in security badge
  */
 
-/* Override navbar brand text size */
+/* ── Navbar brand icon ── */
+.icon-gold      { color: var(--db-gold); }
+.icon-nav-brand { font-size: 1.5rem; }
+
+/* ── IHS banner logo ── */
+.ihs-banner-logo {
+    height: 22px;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+/* ── Override brand text size for Login ── */
 .navbar-brand-text { font-size: 1.4rem; }
 
-/* ── Login Card Layout ── */
+/* ── "Secure Login" label in navbar ── */
+.secure-login-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+}
+
+/* ── Login card layout ── */
 .login-wrapper {
     flex: 1;
     display: flex;
@@ -39,7 +66,7 @@
     margin-bottom: 32px;
 }
 
-/* ── Form Fields ── */
+/* ── Form fields ── */
 .form-label {
     font-weight: 600;
     font-size: 0.88rem;
@@ -65,7 +92,7 @@
 }
 .input-group .form-control { border-radius: 0 10px 10px 0; }
 
-/* ── Login Button ── */
+/* ── Login button ── */
 .btn-login {
     background: linear-gradient(135deg, var(--db-navy), #1a3a6b);
     color: white;
@@ -84,7 +111,7 @@
     color: white;
 }
 
-/* ── Error Alert ── */
+/* ── Error alert ── */
 .alert-login-error {
     background-color: #fff0f0;
     border: 1px solid #ffcccc;
@@ -99,7 +126,7 @@
     animation: fadeInUp 0.3s ease-out both;
 }
 
-/* ── Helper Links ── */
+/* ── Helper links ── */
 .helper-links {
     display: flex;
     justify-content: space-between;
@@ -133,19 +160,20 @@
 .login-divider::before { left: 0; }
 .login-divider::after  { right: 0; }
 
-/* ── Open Account ── */
+/* ── Open account text ── */
 .open-account-text {
     text-align: center;
     font-size: 0.87rem;
     color: #888;
 }
-.open-account-text span {
+/* replaces inline style="color:#bbb;cursor:not-allowed;font-weight:600;" */
+.open-account-disabled {
     color: #bbb;
     cursor: not-allowed;
     font-weight: 600;
 }
 
-/* ── Security Badge ── */
+/* ── Security badge ── */
 .security-badge {
     display: flex;
     align-items: center;
@@ -155,7 +183,8 @@
     font-size: 0.78rem;
     color: #aaa;
 }
-.security-badge i { color: #28a745; }
+/* replaces style="color:#28a745;" on shield icon */
+.icon-green { color: #28a745; }
 
 /* ── Footer override ── */
 .dsb-footer { padding: 18px 0; font-size: 0.8rem; }

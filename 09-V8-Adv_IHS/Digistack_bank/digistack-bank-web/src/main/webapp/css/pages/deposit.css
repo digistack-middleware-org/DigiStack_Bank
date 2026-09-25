@@ -1,7 +1,28 @@
 /*
- * deposit.css — DigiStack Bank P01 v6
- * Styles specific to Deposit.jsp.
+ * deposit.css — DigiStack Bank P01 v8 (updated)
+ *
+ * v8 update: all inline style="" attributes extracted to classes.
+ *
+ * Classes shared with other pages come from common.css:
+ *   .navbar-user-label, .alert-icon, .icon-gold, .icon-navy,
+ *   .account-summary-card and all its children,
+ *   .frozen-chip, .alert-success-custom, .alert-error-custom,
+ *   .back-link, .page-header, .breadcrumb-nav, .dsb-footer
+ *
+ * New classes specific to this page:
+ *   .acct-holder-name       — holder name inside summary card
+ *   .icon-deposit-title     — green colour on form card icon
+ *   .frozen-form-notice     — amber warning box inside form when frozen
+ *   .frozen-form-link       — Unfreeze link inside frozen notice
  */
+
+/* ── Account holder name in summary card ── */
+/* replaces style="font-size:1.05rem;font-weight:600;margin-bottom:6px;" */
+.acct-holder-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
 
 /* ── Form Card ── */
 .form-card {
@@ -22,7 +43,33 @@
     gap: 8px;
 }
 
-/* ── Form Fields ── */
+/* ── Deposit title icon colour ── */
+/* replaces style="color:#28a745;" on the form card icon */
+.icon-deposit-title { color: #28a745; }
+
+/* ── Frozen form notice ── */
+/* replaces style="background:#fff3cd;border:1px solid #ffc107;
+   border-radius:10px;padding:14px 16px;color:#856404;
+   font-size:0.88rem;margin-bottom:16px;" */
+.frozen-form-notice {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #856404;
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+}
+
+/* ── Unfreeze link inside frozen notice ── */
+/* replaces style="color:#856404;font-weight:700;" */
+.frozen-form-link {
+    color: #856404;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* ── Form fields ── */
 .form-label {
     font-weight: 600;
     font-size: 0.85rem;
@@ -69,9 +116,12 @@
     cursor: pointer;
     transition: background-color 0.15s, border-color 0.15s;
 }
-.btn-quick-amount:hover { background: #e2e8f4; border-color: var(--db-navy); }
+.btn-quick-amount:hover {
+    background: #e2e8f4;
+    border-color: var(--db-navy);
+}
 
-/* ── Deposit Button ── */
+/* ── Deposit Submit Button ── */
 .btn-deposit {
     background: linear-gradient(135deg, #1a6b3a, #28a745);
     color: white;
@@ -83,4 +133,13 @@
     transition: opacity 0.2s, transform 0.15s;
     width: 100%;
 }
-.btn-deposit:hover { opacity: 0.9; transform: translateY(-1px); color: white; }
+.btn-deposit:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: white;
+}
+.btn-deposit[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
